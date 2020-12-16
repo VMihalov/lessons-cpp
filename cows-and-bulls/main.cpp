@@ -1,23 +1,31 @@
 #include <iostream>
 #include <stdlib.h>
 #include <time.h>
+#define SIZE 4
 
 using namespace std;
 
+struct Check {
+    int cows = 0;
+    int bulls = 0;
+    bool error = false;
+};
+
 string randNumber() {
     srand(time(0));
-    string res = "0000";
+    string res = "";
 
-    for (int i = 0; i < 4;) {
-        int error = 0;
+    for (int i = 0; i < SIZE;) {
+        int error = false;
         int number = rand() % 10;
 
         for (int j = 0; j < i; j++) {
-            if (res[j] == number + '0') error++;
+            if (res[j] == number + '0') 
+                error = true;
         }
 
-        if (error == 0) {
-            res[i] = number + '0';
+        if (!error) {
+            res += number + '0';
             i++;
         }
     }
@@ -25,21 +33,24 @@ string randNumber() {
     return res;
 }
 
-string checkNumbers(string first, string second) {
+Check checkNumbers(string first, string second) {
     int a = 0, b = 0;
-    string result = "";
+    Check result;
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
+    if (first.length() != SIZE || second.length() != SIZE) {
+        result.error = true;
+
+        return result;
+    }
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
             if (first[i] == second[j] && i == j) a++;
             if (first[i] == second[j]) b++;
         }
     }
 
-    result += a + '0';
-    result += b + '0';
-
-    return result;
+    return result = {a, b};
 }
 
 int main()
@@ -47,14 +58,19 @@ int main()
     string comp = randNumber();
     string you = "";
 
-    while (true) {
+    while (comp.compare(you) != 0) {
         cout << "Insert number: ";
         cin >> you;
 
-        string check = checkNumbers(comp, you);
+        Check check = checkNumbers(comp, you);
 
-        cout << check[0] << "/" << check[1] << endl;
-        if (check[0] == '4' && check[1] == '4') break;
+        if (check.error) {
+            cout << "Try again!\n";
+
+            continue;
+        }
+
+        cout << check.cows << "/" << check.bulls << endl;
     }
 
     cout << "You win!" << endl;
