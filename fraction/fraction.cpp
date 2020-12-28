@@ -2,13 +2,13 @@
 
 int size = 1;
 
-struct fraction
+struct Fraction
 {
     int numerator;
     int denominator;
 };
 
-int gcd(fraction* den)
+int gcd(Fraction* den)
 {
     int res = 1;
     bool error = false;
@@ -34,10 +34,34 @@ int gcd(fraction* den)
     return res;
 }
 
-fraction sum(fraction* numbers) {
+Fraction cut(Fraction fraction) {
+    Fraction num = fraction;
+    bool error = false;
+
+    for (int i = 2; i < 9; i++)
+    {
+        error = false;
+
+        while (true)
+        {
+            if (num.numerator % i != 0 || num.denominator % i != 0) {
+                error = true;
+            }
+
+            if (error) break;
+
+            num.numerator = num.numerator / i;
+            num.denominator = num.denominator / i;
+        }   
+    }
+
+    return num;
+}
+
+Fraction sum(Fraction* numbers) {
     int sum = 0;
     int nod = 0;
-    fraction result;
+    Fraction result;
 
     nod = gcd(numbers);
 
@@ -49,10 +73,10 @@ fraction sum(fraction* numbers) {
     return result = { sum, nod };
 }
 
-fraction subtraction(fraction* numbers) {
+Fraction subtraction(Fraction* numbers) {
     int substraction = 0;
     int nod = 0;
-    fraction result;
+    Fraction result;
 
     nod = gcd(numbers);
 
@@ -66,10 +90,10 @@ fraction subtraction(fraction* numbers) {
     return result = { substraction, nod };
 }
 
-fraction multiplication(fraction* numbers) {
+Fraction multiplication(Fraction* numbers) {
     int num = 1;
     int den = 1;
-    fraction result;
+    Fraction result;
 
     for (int i = 0; i < ::size; i++)
     {
@@ -80,10 +104,10 @@ fraction multiplication(fraction* numbers) {
     return result = { num, den };  
 }
 
-fraction division(fraction* numbers) {
+Fraction division(Fraction* numbers) {
     int num = numbers[0].numerator;
     int den = numbers[0].denominator;
-    fraction result;
+    Fraction result;
 
     for (int i = 1; i < ::size; i++)
     {
@@ -95,13 +119,14 @@ fraction division(fraction* numbers) {
 }
 
 int main() {
-    fraction out;
+    bool error = false;
+    Fraction out;
     char operation = '+';
 
     std::cout << "Number of fractions: ";
     std::cin >> ::size;
 
-    fraction* darr = new fraction[::size];
+    Fraction* darr = new Fraction[::size];
     
     std::cout << "Input numerator and denominator with space "<< ::size << " times\n" ;
 
@@ -113,29 +138,33 @@ int main() {
     std::cout << "Insert operation + - / *\n> ";
     std::cin >> operation;
 
-    if (::size > 1) {
-        switch (operation)
-        {
-        case '+':
-            out = sum(darr);
-            break;
-        case '-':
-            out = subtraction(darr);
-            break;
-        case '/':
-            out = division(darr);
-            break;
-        case '*':
-            out = multiplication(darr);
-            break;
-        default:
-            break;
-        }
-    } else {
-        out = { darr[0].numerator, darr[0].denominator };
+    switch (operation)
+    {
+    case '+':
+        out = sum(darr);
+        break;
+    case '-':
+        out = subtraction(darr);
+        break;
+    case '/':
+        out = division(darr);
+        break;
+    case '*':
+        out = multiplication(darr);
+        break;
+    default:
+        error = true;
+        break;
     }
+    
+    out = cut(out);
 
-    std::cout << "Result: " << out.numerator << "/" << out.denominator << std::endl;
+    if (!error)
+        std::cout << "Result: " << out.numerator << "/" << out.denominator << std::endl;   
+    else
+        std::cout << "Error" << std::endl;
 
     delete[] darr;
+
+    return 1;
 }
