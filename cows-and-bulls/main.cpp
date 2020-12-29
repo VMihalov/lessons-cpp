@@ -20,12 +20,12 @@ string randNumber() {
         int number = rand() % 10;
 
         for (int j = 0; j < i; j++) {
-            if (res[j] == number + '0') 
+            if (res[j] == (char)number) 
                 error = true;
         }
 
         if (!error) {
-            res += number + '0';
+            res += to_string(number);
             i++;
         }
     }
@@ -45,7 +45,8 @@ Check checkNumbers(string first, string second) {
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            if (first[i] == second[j] && i == j) a++;
+            if (first[i] == second[j] && i == j)
+                a++;
             if (first[i] == second[j]) b++;
         }
     }
@@ -55,14 +56,14 @@ Check checkNumbers(string first, string second) {
 
 int main()
 {
-    string comp = randNumber();
-    string you = "";
+    string bot = randNumber();
+    string user = "";
 
-    while (comp.compare(you) != 0) {
+    while (bot.compare(user) != 0) {
         cout << "Insert number: ";
-        cin >> you;
+        cin >> user;
 
-        Check check = checkNumbers(comp, you);
+        Check check = checkNumbers(bot, user);
 
         if (check.error) {
             cout << "Try again!\n";
