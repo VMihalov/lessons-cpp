@@ -1,36 +1,77 @@
 #include <iostream>
 #include <string>
 
-int size = 7;
+int size = 0;
 
 struct Case {
+    struct Deadline {
+        short day;
+        short month;
+        short year;
+    };
     std::string title = "";
     std::string description = "";
-    std::string deadline = "";
     int priority = 0;
+    Deadline deadline;
     std::string created_at = "";
     std::string updated_at = "";
 };
 
-int create(Case* arr)
+short isValidDate( short day, short month, int year )
 {
-    Case req;
+	if (year < 2021 || year >= 2100)
+        return 1;
+
+    if (month < 1 || month > 12)
+        return 1;
+
+    if (day < 1 || day > 31)
+        return 1;
+	
+	return 0;
+}
+
+Case inputForm() {
+    Case res;
+    unsigned short day, month, year;
+    short error;
 
     std::cout << "Title: ";
-    std::cin >> req.title;
+    std::cin >> res.title;
 
     std::cout << "Description: ";
     std::cin.ignore();
-    std::getline(std::cin, req.description);
+    std::getline(std::cin, res.description);
 
     std::cout << "Priority: ";
-    std::cin >> req.priority;
+    std::cin >> res.priority;
 
-    std::cout << "Deadline: ";
-    std::cin >> req.deadline;
+    std::cout << "Deadline:\n";
+    while(true) {
+        std::cout << "\tDay: ";
+        std::cin >> res.deadline.day;
+        std::cout << "\tMonth: ";
+        std::cin >> res.deadline.month;
+        std::cout << "\tYear: ";
+        std::cin >> res.deadline.year;
 
-    req.created_at = "";
-    req.updated_at = "";
+        error = isValidDate(res.deadline.day, res.deadline.month, res.deadline.year);
+
+        if (error)
+            std::cout << "Try again!\n";
+        else
+            break;
+    }
+
+    res.created_at = "";
+    res.updated_at = "";
+
+    return res;
+}
+
+int create(Case* arr)
+{
+    Case req = inputForm();
 
     arr[::size - 1] = req;
 
@@ -44,19 +85,7 @@ int updateCase(Case* arr) {
     std::cout << "Update by id: ";
     std::cin >> id;
 
-    std::cout << "Title: ";
-    std::cin >> req.title;
-
-    std::cout << "Description: ";
-    std::cin >> req.description;
-
-    std::cout << "Priority: ";
-    std::cin >> req.priority;
-
-    std::cout << "Deadline: ";
-    std::cin >> req.deadline;
-
-    req.updated_at = "";
+    req = inputForm();
 
     arr[id] = req;
 
@@ -67,6 +96,10 @@ int deleteCase(Case* arr) {
     int id = 0;
     std::cout << "Delete by id: ";
     std::cin >> id;
+
+    if (id < 0 || id >= ::size) {
+        return 0;
+    }
 
     for (int i = id; i < ::size - 1; i++)
     {
@@ -102,10 +135,11 @@ int searchCase(Case* arr) {
     return 1;
 }
 
-int resize(Case*& arr, int expand)
+template <typename T>
+int resize(T*& arr, int expand)
 {
     ::size += expand;
-    Case* tmp = new Case[::size];
+    T* tmp = new T[::size];
 
     int length = expand > 0 ? ::size - expand : (::size + expand) + 1;
 
@@ -128,6 +162,10 @@ void view(Case* arr) {
             << arr[i].title
             << "\t|\t"
             << arr[i].description
+            << "\t|\t"
+            << arr[i].priority
+            << "\t|\t"
+            << std::to_string(arr[i].deadline.day) + '.' + std::to_string(arr[i].deadline.month) + '.' + std::to_string(arr[i].deadline.year)
             << "\t|\n";
     }
     std::cout << std::endl;
@@ -136,11 +174,6 @@ void view(Case* arr) {
 int main()
 {
     Case* todo = new Case[::size];
-    for (int i = 0; i < ::size; i++)
-    {
-        todo[i].title = "Hello" + std::to_string(i);
-        todo[i].description = i;
-    }
     int action = 0;
     
     while (true) {
@@ -166,14 +199,20 @@ int main()
                 updateCase(todo);
                 break;
             case 3: {
-                deleteCase(todo);
-                resize(todo, -1);
+                int remove = deleteCase(todo);
+
+                if (!remove) {
+                    std::cout << "\nId is invalid\n";
+                } else {
+                    resize(todo, -1);
+                }
+                
                 break;
             }
             case 4:
                 searchCase(todo);
                 break;
-            default:
+            default: 
                 std::cout << "Try again!\n";
                 break;
         }
