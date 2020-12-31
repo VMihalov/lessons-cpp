@@ -1,10 +1,10 @@
 #include <iostream>
 #include <string>
 
-int size = 0;
-
 struct Case {
-    struct Deadline {
+    struct Date {
+        short minutes;
+        short hour;
         short day;
         short month;
         short year;
@@ -12,14 +12,17 @@ struct Case {
     std::string title = "";
     std::string description = "";
     int priority = 0;
-    Deadline deadline;
+    Date deadline;
     std::string created_at = "";
     std::string updated_at = "";
 };
 
-short isValidDate( short day, short month, int year )
+int size = 4;
+Case::Date currentDate;
+
+short isValidDate(short minutes, short hour, short day, short month, int year)
 {
-	if (year < 2021 || year >= 2100)
+	if (year < currentDate.year || year >= 2100)
         return 1;
 
     if (month < 1 || month > 12)
@@ -48,6 +51,10 @@ Case inputForm() {
 
     std::cout << "Deadline:\n";
     while(true) {
+        std::cout << "\tHour: ";
+        std::cin >> res.deadline.hour;
+        std::cout << "\tMinutes: ";
+        std::cin >> res.deadline.minutes;
         std::cout << "\tDay: ";
         std::cin >> res.deadline.day;
         std::cout << "\tMonth: ";
@@ -55,7 +62,7 @@ Case inputForm() {
         std::cout << "\tYear: ";
         std::cin >> res.deadline.year;
 
-        error = isValidDate(res.deadline.day, res.deadline.month, res.deadline.year);
+        error = isValidDate(res.deadline.minutes, res.deadline.hour, res.deadline.day, res.deadline.month, res.deadline.year);
 
         if (error)
             std::cout << "Try again!\n";
@@ -67,6 +74,38 @@ Case inputForm() {
     res.updated_at = "";
 
     return res;
+}
+
+void viewSingleCase(Case row) {
+    std::cout << " |\t"
+            << row.title
+            << "\t|\t"
+            << row.description
+            << "\t|\t"
+            << row.priority
+            << "\t|\t"
+            << std::to_string(row.deadline.hour) + ':' + std::to_string(row.deadline.minutes) + ' ' + std::to_string(row.deadline.day) + '.' + std::to_string(row.deadline.month) + '.' + std::to_string(row.deadline.year)
+            << "\t|\n";
+}
+
+void sortBy(Case* arr) {
+    Case* sortArray = new Case[::size];
+    Case tmp;
+    sortArray = arr;
+
+    for (int i = 0; i < ::size; i++)
+    {
+        for (int j = 0; j < ::size; j++)
+        {
+            if (sortArray[i].priority < sortArray[j].priority) {
+                tmp = sortArray[i];
+                sortArray[i] = sortArray[j];
+                sortArray[j] = tmp;    
+            }
+        }
+        
+    }
+    
 }
 
 int create(Case* arr)
@@ -84,6 +123,10 @@ int updateCase(Case* arr) {
 
     std::cout << "Update by id: ";
     std::cin >> id;
+
+    if (id < 0 || id >= ::size) {
+        return 0;
+    }
 
     req = inputForm();
 
@@ -153,33 +196,67 @@ int resize(T*& arr, int expand)
     return 1;
 }
 
-void view(Case* arr) {
+int view(Case* arr) {
+    unsigned short timestep = 1;
+    int width;
+    std::cout << "View on: 1 - today; 2 - this week; 3 - this month; 4 - all;\n> ";
+    std::cin >> timestep;
+
     for (int i = 0; i < ::size; i++)
     {
-        std::cout << "| "
-            << i
-            << " |\t"
-            << arr[i].title
-            << "\t|\t"
-            << arr[i].description
-            << "\t|\t"
-            << arr[i].priority
-            << "\t|\t"
-            << std::to_string(arr[i].deadline.day) + '.' + std::to_string(arr[i].deadline.month) + '.' + std::to_string(arr[i].deadline.year)
-            << "\t|\n";
+        if (timestep == 1)
+        {
+            if (arr[i].deadline.day == currentDate.day && arr[i].deadline.month == currentDate.month && arr[i].deadline.year == currentDate.year) {
+                std::cout << "| " << i;
+                viewSingleCase(arr[i]);
+            }
+        }
+
+        // if (timestep == 2) {
+        //     if (arr[i].deadline.day <= currentDate.day + 7) {
+        //         std::cout << "| " << i;
+        //         viewSingleCase(arr[i]);
+        //     }
+        // }
+
+        if (timestep == 4)
+        {
+            std::cout << "| " << i;
+            viewSingleCase(arr[i]);
+        }
+        
     }
+    
+
     std::cout << std::endl;
+
+    return 1;
 }
 
 int main()
 {
     Case* todo = new Case[::size];
-    int action = 0;
-    
+    short action = 0;
+
+    std::cout << "Initialize datetime\n\tHour: ";
+    std::cin >> currentDate.hour;
+
+    std::cout << "\tMinutes: ";
+    std::cin >> currentDate.minutes;
+
+    std::cout << "\tDay: ";
+    std::cin >> currentDate.day;
+
+    std::cout << "\tMonth: ";
+    std::cin >> currentDate.month;
+
+    std::cout << "\tYear: ";
+    std::cin >> currentDate.year;
+
     while (true) {
         //view(todo);
 
-        std::cout << "Set action: 0 - view; 1 - Create; 2 - Update; 3 - Delete; 4 - Search; 5 - Sort by; -1 - Exit\n> ";
+        std::cout << "Menu: 0 - view; 1 - Create; 2 - Update; 3 - Delete; 4 - Search; 5 - Sort by; -1 - Exit\n> ";
         std::cin >> action;
 
         if (action == -1)
@@ -187,17 +264,25 @@ int main()
 
         switch (action)
         {
-            case 0:
+            case 0: {
                 view(todo);
+
                 break;
+            }
             case 1: {
                 resize(todo, 1);
                 create(todo);
                 break;
             }
-            case 2:
-                updateCase(todo);
+            case 2: {
+                int update = updateCase(todo);
+
+                if (!update) {
+                    std::cout << "\nId is invalid\n";
+                }
+                
                 break;
+            }
             case 3: {
                 int remove = deleteCase(todo);
 
@@ -211,6 +296,9 @@ int main()
             }
             case 4:
                 searchCase(todo);
+                break;
+            case 5:
+                sortBy(todo);
                 break;
             default: 
                 std::cout << "Try again!\n";
