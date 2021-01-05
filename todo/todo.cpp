@@ -10,20 +10,20 @@ struct Case {
         short month = 1;
         int year = 2021;
     };
-    std::string title = "test";
-    std::string description = "test";
+    std::string title = "";
+    std::string description = "";
     int priority = 0;
     Date deadline = {0, 0, 1, 1, 2021};
     std::string created_at = "";
     std::string updated_at = "";
 };
 
-int size = 0;
+int size = 6;
 Case::Date currentDate;
 
 void createController(Case*& todo);
 void updateController(Case* todo);
-void deleteController(Case* todo);
+void deleteController(Case*& todo);
 void optionController();
 
 short initializeTime(Case::Date time);
@@ -35,8 +35,8 @@ void render(Case*& todo, short choice = 0);
 void showTable(Case* arr, short mode = 0);
 void viewSingleCase(Case row);
 
-Case inputForm();
-Case* resize(Case* arr);
+Case inputForm(Case temp = {});
+Case* resize(Case* arr, short length = 1);
 void showData(Case* Obj);
 
 void errorMessage(std::string text) {
@@ -45,8 +45,13 @@ void errorMessage(std::string text) {
 
 int main()
 {
-    Case* todo = 0;
+    Case* todo = new Case[::size];
     short action = 0;
+
+    for (int i = 0; i < ::size; i++)
+    {
+        todo[i].title = "Hello" + std::to_string(i);
+    }
 
     initializeTime(currentDate);
 
@@ -68,42 +73,12 @@ int main()
         case 1:
             createController(todo);
             break;
-        case 2: {
-            //updateController(todo);
-            int id = 0;
-            Case req;
-
-            std::cout << "Update by id: ";
-            std::cin >> id;
-
-            id--;
-
-            if (id < 0 || id >= ::size) {
-                errorMessage("invalid id!");
-            } else {
-                req = inputForm();
-
-                todo[id] = req;
-            }
-
+        case 2:
+            updateController(todo);
             break;
-        }
-        case 3: {
-            int id = 0;
-            std::cout << "Delete by id: ";
-            std::cin >> id;
-
-            if (id < 0 || id >= ::size) {
-                errorMessage("Invalid id!");
-            }
-
-            for (int i = id; i < ::size - 1; i++)
-            {
-                todo[i] = todo[i + 1];
-            }
-
+        case 3:
+            deleteController(todo);
             break;
-        }
         case 4:
             break;
         case 5:
@@ -123,6 +98,17 @@ int main()
 
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
 
 void createController(Case*& todos) {
     Case form = inputForm();
@@ -150,17 +136,21 @@ void updateController(Case* todo) {
     std::cout << "Update by id: ";
     std::cin >> id;
 
+    id--;
+
     if (id < 0 || id >= ::size) {
         return errorMessage("invalid id!");
     }
 
-    req = inputForm();
+    req = todo[id];
+
+    req = inputForm(req);
 
     todo[id] = req;
 
 }
 
-void deleteController(Case* todo) {
+void deleteController(Case*& todo) {
     int id = 0;
     std::cout << "Delete by id: ";
     std::cin >> id;
@@ -176,6 +166,11 @@ void deleteController(Case* todo) {
         todo[i] = todo[i + 1];
     }
 
+    todo = resize(todo, -1);
+
+    ::size--;
+
+    showData(todo);
 }
 
 void optionController() {
@@ -222,13 +217,13 @@ void render(Case*& todo, short choice) {
     system("cls");
 
     std::cout << ::size << std::endl;
-    std::cout << "№  " << "Title\t" << "Description\t" << "Priority\t" << std::endl;
+    std::cout << "№  " << "Title\t" << "Description\t" << "Priority\t" << "Deadline\t" << std::endl;
     std::cout << "========================================" << std::endl;
 
     for (int i = 0; i < ::size; i++)
     {
         if (choice == 4) {
-            std::cout << i + 1 << "  " << todo[i].title << '\t' << todo[i].description << '\t' << todo[i].priority << std::endl;
+            std::cout << i + 1 << "  " << todo[i].title << '\t' << todo[i].description << '\t' << todo[i].priority << '\t' << todo[i].deadline.day << std::endl;
         }
     }
 
@@ -311,42 +306,44 @@ void showData(Case* Obj)
 }
 
 
-Case* resize(Case* Obj)
+Case* resize(Case* arr, short length)
 {
     if (::size == 0)
     {
-        Obj = new Case[::size + 1];
+        arr = new Case[::size + 1];
     }
     else
     {
-        Case* tempObj = new Case[::size + 1];
+        int expand = length > 0 ? ::size : ::size + length;
+
+        Case* tempObj = new Case[::size + length];
         
-        for (int i = 0; i < ::size; i++)
+        for (int i = 0; i < expand; i++)
         {
-            tempObj[i] = Obj[i];
+            tempObj[i] = arr[i];
         }
 
-        delete[] Obj;
+        delete[] arr;
 
-        Obj = tempObj;
+        arr = tempObj;
     }
 
-    return Obj;
+    return arr;
 }
 
-Case inputForm() {
-    Case res;
+Case inputForm(Case temp) {
+    Case res = temp;
     short error;
 
-    std::cout << "Title: ";
+    std::cout << "Title: (=" + temp.title + ") : ";
     std::cin.ignore();
     std::getline(std::cin, res.title);
 
-    std::cout << "Description: ";
+    std::cout << "Description: (=" + temp.description + ") : ";
     std::cin.ignore();
     std::getline(std::cin, res.description);
 
-    std::cout << "Priority: ";
+    std::cout << "Priority: (=" + std::to_string(temp.priority) + ") : ";
     std::cin >> res.priority;
 
     std::cout << "Deadline:\n";
