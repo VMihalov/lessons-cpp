@@ -1,19 +1,28 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <string>
 #include <windows.h>
+#include <chrono>
+#include <ctime>  
+
+struct Date;
+struct Case;
+struct Filter;
+struct Find;
+
+struct Date {
+    short minutes = 0;
+    short hour = 0;
+    short day = 1;
+    short month = 1;
+    int year = 2021;
+};
 
 struct Case {
-    struct Date {
-        short minutes = 0;
-        short hour = 0;
-        short day = 1;
-        short month = 1;
-        int year = 2021;
-    };
     std::string title = "";
     std::string description = "";
     int priority = 0;
-    Date deadline = {0, 0, 1, 1, 2021};
+    Date deadline;
     std::string created_at = "";
     std::string updated_at = "";
 };
@@ -24,33 +33,52 @@ struct Filter
     int size;
 };
 
+struct Find
+{
+    Case* result;
+    int size;
+};
+
 int size = 0;
-Case::Date currentDate;
+Date currentDate;
 
 //Controllers
 void createController(Case*& todo);
 void updateController(Case* todo);
 void deleteController(Case*& todo);
+void findController(Case*& todo);
 void optionController();
 
-//Initialize
-short initializeTime(Case::Date& time);
-
 // Validate
-short validateDate(Case::Date form);
 short validateForm(Case form);
 
 // Show table
-void render(Case*& todo, short choice = 0);
+void render(Case*& todo, short choice = 0, int size = ::size);
 
 // Working with table
 Case inputForm(Case temp = {});
 Case* resize(Case* arr, int count = ::size, short length = 1);
 
 //Filters
-Filter filterForDay(Case* parent, Case::Date date, int parentSize);
-Filter filterForWeek(Case* parent, Case::Date date, int parentSize);
-Filter filterForMonth(Case* parent, Case::Date date, int parentSize);
+Filter filterForDay(Case* parent, Date date, int parentSize);
+Filter filterForWeek(Case* parent, Date date, int parentSize);
+Filter filterForMonth(Case* parent, Date date, int parentSize);
+
+//Search
+Find findByTitle(Case* arr, int size, std::string title);
+Find findByPriority(Case* arr, int size, int priority);
+Find findByDescription(Case* arr, int size, std::string description);
+Find findByDate(Case* arr, int size, Date date);
+
+//Sort
+Case* sortByPriority();
+Case* sortByDate();
+
+//Time
+void initializeTime(Date& date);
+Date getCurrentTime();
+Date inputDate();
+short validateDate(Date form);
 
 void errorMessage(std::string text) {
     std::cout << "\n" + text + "\n";
@@ -66,7 +94,7 @@ int main()
     system("cls");
 
     while (true) {
-        std::cout << "Menu: 0 - view; 1 - Create; 2 - Update; 3 - Delete; 4 - Search; 5 - Sort by; 6 - Settings; -1 - Exit\n> ";
+        std::cout << "Menu: 0 - view; 1 - Create; 2 - Update; 3 - Delete; 4 - Find; 5 - Sort by; 6 - Settings; -1 - Exit\n> ";
         std::cin >> action;
 
         if (action == -1)
@@ -88,6 +116,7 @@ int main()
             deleteController(todo);
             break;
         case 4:
+            findController(todo);
             break;
         case 5:
             break;
@@ -106,6 +135,7 @@ int main()
 
     return 0;
 }
+
 
 void createController(Case*& todos) {
     Case form = inputForm();
@@ -149,7 +179,12 @@ void updateController(Case* todo) {
 
 void deleteController(Case*& todo) {
     int id = 0;
-    std::cout << "Delete by id: ";
+
+    system("cls");
+
+    render(todo, 4);
+
+    std::cout << "\nSelect the id written above to delete: ";
     std::cin >> id;
 
     id--;
@@ -166,6 +201,60 @@ void deleteController(Case*& todo) {
     todo = resize(todo, ::size, -1);
 
     ::size--;
+}
+
+void findController(Case*& todo)
+{
+    short choice = 0;
+    Date date;
+    int priority = 0;
+    Find result;
+    std::string text;
+
+    std::cout << "Find by: 1 - title; 2 - description; 3 - priority; 4 - deadline\n> ";
+
+    std::cin >> choice;
+
+    switch (choice)
+    {
+        case 1:
+        {
+            std::cout << "Title: ";
+            std::cin >> text;
+
+            result = findByTitle(todo, ::size, text);
+            break;
+        }
+        case 2:
+        {
+            std::cout << "Description: ";
+            std::cin >> text;
+
+            result = findByDescription(todo, ::size, text);
+            break;
+        }
+        case 3:
+        {
+            std::cout << "Priority: ";
+            std::cin >> priority;
+
+            result = findByPriority(todo, ::size, priority);
+            break;
+        }
+        case 4:
+        {
+            std::cout << "Date:\n";
+            date = inputDate();
+
+            result = findByDate(todo, ::size, date);
+            break;
+        }
+        default:
+            std::cout << "Incorrect value!\n";
+            break;
+    }
+
+    render(result.result, 0, result.size);
 }
 
 void optionController() {
@@ -185,7 +274,7 @@ void optionController() {
     }
 }
 
-void render(Case*& todo, short choice) {    
+void render(Case*& todo, short choice, int size) {    
     if (choice == 0) {
         std::cout << "Show on 1 - day, 2 - week, 3 - month, 4 - all\n";
 
@@ -197,16 +286,16 @@ void render(Case*& todo, short choice) {
     switch (choice)
     {
         case 1:
-            response = filterForDay(todo, currentDate, ::size);
+            response = filterForDay(todo, currentDate, size);
             break;
         case 2:
-            response = filterForWeek(todo, currentDate, ::size);
+            response = filterForWeek(todo, currentDate, size);
             break;
         case 3:
-            response = filterForMonth(todo, currentDate, ::size);
+            response = filterForMonth(todo, currentDate, size);
             break;
         case 4:
-            response = { todo, ::size };
+            response = { todo, size };
             break;
         default:
             break;
@@ -224,37 +313,70 @@ void render(Case*& todo, short choice) {
 
 }
 
-short initializeTime(Case::Date& time) {
-    short validate;
+void initializeTime(Date& date) {
+    bool isCorrect = true;
+    
+    date = getCurrentTime();
+
+    std::cout << "Is time correct? " + std::to_string(date.hour) + ":" + std::to_string(date.minutes) + " " + std::to_string(date.day) + "." + std::to_string(date.month) + "." + std::to_string(date.year) + "\n";
+    std::cout << "1 - yes; 0 - no\n> ";
+
+    std::cin >> isCorrect;
+
+    if (!isCorrect)
+    {
+        date = inputDate();
+    }
+}
+
+Date inputDate()
+{
+    Date result;
+    bool validate = false;
 
     std::cout << "Initialize datetime\n";
 
     do {
         std::cout << "\tHour: ";
-        std::cin >> time.hour;
+        std::cin >> result.hour;
 
         std::cout << "\tMinutes: ";
-        std::cin >> time.minutes;
+        std::cin >> result.minutes;
 
         std::cout << "\tDay: ";
-        std::cin >> time.day;
+        std::cin >> result.day;
 
         std::cout << "\tMonth: ";
-        std::cin >> time.month;
+        std::cin >> result.month;
 
         std::cout << "\tYear: ";
-        std::cin >> time.year;
+        std::cin >> result.year;
 
-        validate = validateDate(time);
+        validate = validateDate(result);
 
         if (validate)
             std::cout << "Incorrect date!\nTry again!\n";
     } while (validate);
 
-    return 0;
+    return result;
 }
 
-short validateDate(Case::Date form)
+Date getCurrentTime()
+{
+    Date result;
+    std::time_t t = std::time(0);
+    std::tm* now = std::localtime(&t);
+
+    result.minutes = now->tm_min;
+    result.hour = now->tm_hour;
+    result.day = now->tm_mday;
+    result.month = (now->tm_mon + 1);
+    result.year = (now->tm_year + 1900);
+
+    return result;
+}
+
+short validateDate(Date form)
 {
     if (form.hour > 60 || form.hour < 0) {
         return 1;
@@ -355,7 +477,7 @@ Case inputForm(Case temp) {
     return res;
 }
 
-Filter filterForDay(Case* parent, Case::Date date, int parentSize)
+Filter filterForDay(Case* parent, Date date, int parentSize)
 {
     Filter result;
     int childSize = 0;
@@ -379,7 +501,7 @@ Filter filterForDay(Case* parent, Case::Date date, int parentSize)
     return result;
 }
 
-Filter filterForWeek(Case* parent, Case::Date date, int parentSize)
+Filter filterForWeek(Case* parent, Date date, int parentSize)
 {
     Filter result;
     int childSize = 0;
@@ -433,7 +555,7 @@ Filter filterForWeek(Case* parent, Case::Date date, int parentSize)
     return result;
 }
 
-Filter filterForMonth(Case* parent, Case::Date date, int parentSize)
+Filter filterForMonth(Case* parent, Date date, int parentSize)
 {
     Filter result;
     int childSize = 0;
@@ -449,6 +571,102 @@ Filter filterForMonth(Case* parent, Case::Date date, int parentSize)
 
     result.arr = child;
     result.size = childSize;
+
+    return result;
+}
+
+Find findByTitle(Case* arr, int size, std::string title)
+{
+    Find result;
+    int tmpSize = 0;
+    Case* tmp = new Case[tmpSize];
+
+    for (int i = 0; i < size; i++)
+    {
+        if (arr[i].title == title)
+        {
+            tmp = resize(tmp, tmpSize);
+
+            tmp[tmpSize] = arr[i];
+
+            tmpSize++;
+        }
+    }
+
+    result.result = tmp;
+    result.size = tmpSize;
+
+    return result;
+}
+
+Find findByPriority(Case* arr, int size, int priority)
+{
+    Find result;
+    int tmpSize = 0;
+    Case* tmp = new Case[tmpSize];
+
+    for (int i = 0; i < size; i++)
+    {
+        if (arr[i].priority == priority)
+        {
+            tmp = resize(tmp, tmpSize);
+
+            tmp[tmpSize] = arr[i];
+
+            tmpSize++;
+        }
+    }
+
+    result.result = tmp;
+    result.size = tmpSize;
+
+    return result;
+}
+
+Find findByDescription(Case* arr, int size, std::string description)
+{
+    Find result;
+    int tmpSize = 0;
+    Case* tmp = new Case[tmpSize];
+
+    for (int i = 0; i < size; i++)
+    {
+        if (arr[i].description == description)
+        {
+            tmp = resize(tmp, tmpSize);
+
+            tmp[tmpSize] = arr[i];
+
+            tmpSize++;
+        }
+    }
+
+    result.result = tmp;
+    result.size = tmpSize;
+
+    return result;
+}
+
+Find findByDate(Case* arr, int size, Date date)
+{
+    Find result;
+    int tmpSize = 0;
+    Case* tmp = new Case[tmpSize];
+
+    for (int i = 0; i < size; i++)
+    {
+        if (arr[i].deadline.day == date.day && arr[i].deadline.month == date.month && arr[i].deadline.year == date.year)
+        {
+            tmp = resize(tmp, tmpSize);
+
+            tmp[tmpSize] = arr[i];
+
+            tmpSize++;
+        }
+    }
+
+    result.result = tmp;
+    result.size = tmpSize;
 
     return result;
 }
