@@ -3,7 +3,8 @@
 #include <string>
 #include <windows.h>
 #include <chrono>
-#include <ctime>  
+#include <ctime>
+#include <iomanip>
 
 struct Date;
 struct Case;
@@ -39,7 +40,7 @@ struct Find
     int size;
 };
 
-int size = 0;
+int size = 5;
 Date currentDate;
 
 //Controllers
@@ -53,7 +54,7 @@ void optionController();
 short validateForm(Case form);
 
 // Show table
-void render(Case*& todo, short choice = 0, int size = ::size);
+void render(Case*& todo, int size, short choice = -1, short sort = -1);
 
 // Working with table
 Case inputForm(Case temp = {});
@@ -71,8 +72,8 @@ Find findByDescription(Case* arr, int size, std::string description);
 Find findByDate(Case* arr, int size, Date date);
 
 //Sort
-Case* sortByPriority();
-Case* sortByDate();
+Case* sortByPriority(Case* arr, int size);
+Case* sortByDate(Case* arr, int size);
 
 //Time
 void initializeTime(Date& date);
@@ -89,6 +90,27 @@ int main()
     Case* todo = new Case[::size];
     short action = 0;
 
+    todo[0].title = "hello";
+    todo[0].description = "how are you?";
+    todo[0].priority = 4;
+    todo[0].deadline = { 0, 0, 13, 2, 2021 };
+    todo[1].title = "lorem";
+    todo[1].description = "dolor sit amet";
+    todo[1].priority = 1;
+    todo[1].deadline = { 0, 0, 10, 1, 2021 };
+    todo[2].title = "yes";
+    todo[2].description = "yeees";
+    todo[2].priority = 2;
+    todo[2].deadline = { 0, 0, 5, 6, 2021 };
+    todo[3].title = "cat";
+    todo[3].description = "dog dog dog cat cat cat pig";
+    todo[3].priority = 7;
+    todo[3].deadline = { 0, 0, 1, 1, 2021 };
+    todo[4].title = "football";
+    todo[4].description = "basketball maybe???";
+    todo[4].priority = 5;
+    todo[4].deadline = { 0, 0, 29, 3, 2021 };
+
     initializeTime(currentDate);
 
     system("cls");
@@ -102,10 +124,9 @@ int main()
 
         switch (action)
         {
-        case 0: {
-            render(todo);
+        case 0:
+            render(todo, ::size);
             break;
-        }
         case 1:
             createController(todo);
             break;
@@ -153,7 +174,7 @@ void createController(Case*& todos) {
 
     ::size++;
 
-    render(todos);
+    render(todos, ::size);
 }
 
 void updateController(Case* todo) {
@@ -182,7 +203,7 @@ void deleteController(Case*& todo) {
 
     system("cls");
 
-    render(todo, 4);
+    render(todo, ::size, 4, 0);
 
     std::cout << "\nSelect the id written above to delete: ";
     std::cin >> id;
@@ -254,7 +275,7 @@ void findController(Case*& todo)
             break;
     }
 
-    render(result.result, 0, result.size);
+    render(result.result, result.size, 0);
 }
 
 void optionController() {
@@ -274,11 +295,17 @@ void optionController() {
     }
 }
 
-void render(Case*& todo, short choice, int size) {    
-    if (choice == 0) {
+void render(Case*& todo, int size, short choice, short sort) {
+    if (choice == -1) {
         std::cout << "Show on 1 - day, 2 - week, 3 - month, 4 - all\n";
 
         std::cin >> choice;
+    }
+
+    if (sort == -1) {
+        std::cout << "Sort by: 1 - priority; 2 - date; 0 - without sort\n> ";
+
+        std::cin >> sort;
     }
 
     Filter response;
@@ -301,20 +328,32 @@ void render(Case*& todo, short choice, int size) {
             break;
     }
 
+    switch (sort)
+    {
+        case 0:
+            break;
+        case 1:
+            response.arr = sortByPriority(response.arr, response.size);
+            break;
+        case 2:
+            response.arr = sortByDate(response.arr, response.size);
+            break;
+    }
+
     system("cls");
 
-    std::cout << "№  " << "Title\t" << "Description\t" << "Priority\t" << "Deadline\t" << std::endl;
-    std::cout << "==================================================================" << std::endl;
+    std::cout << std::setw(3) << std::left << "№" << std::setw(10) << "Title" << std::setw(30) << "Description" << std::setw(10) << "Priority" << std::setw(10) << "Deadline" << std::endl;
 
     for (int i = 0; i < response.size; i++)
     {
-        std::cout << i + 1 << "  " << response.arr[i].title << '\t' << response.arr[i].description << '\t' << response.arr[i].priority << '\t' << std::to_string(response.arr[i].deadline.hour) + ":" + std::to_string(response.arr[i].deadline.minutes) + " " + std::to_string(response.arr[i].deadline.day) + "." + std::to_string(response.arr[i].deadline.month) + "." + std::to_string(response.arr[i].deadline.year) << std::endl;
+        std::cout << std::setw(3) << std::left << i + 1 << std::setw(10) << response.arr[i].title << std::setw(30) << response.arr[i].description << std::setw(10) << response.arr[i].priority << std::setw(10) << std::to_string(response.arr[i].deadline.hour) + ":" + std::to_string(response.arr[i].deadline.minutes) + " " + std::to_string(response.arr[i].deadline.day) + "." + std::to_string(response.arr[i].deadline.month) + "." + std::to_string(response.arr[i].deadline.year) << std::endl;
     }
 
 }
 
 void initializeTime(Date& date) {
     bool isCorrect = true;
+    bool validate = false;
     
     date = getCurrentTime();
 
@@ -325,39 +364,39 @@ void initializeTime(Date& date) {
 
     if (!isCorrect)
     {
-        date = inputDate();
+        std::cout << "Initialize datetime\n";
+
+        do
+        {
+            date = inputDate();
+
+            validate = validateDate(date);
+
+            if (validate)
+                std::cout << "Incorrect date!\nTry again!\n";
+        } while (validate);
     }
 }
 
 Date inputDate()
 {
     Date result;
-    bool validate = false;
 
-    std::cout << "Initialize datetime\n";
+    std::cout << "\tHour: ";
+    std::cin >> result.hour;
 
-    do {
-        std::cout << "\tHour: ";
-        std::cin >> result.hour;
+    std::cout << "\tMinutes: ";
+    std::cin >> result.minutes;
 
-        std::cout << "\tMinutes: ";
-        std::cin >> result.minutes;
+    std::cout << "\tDay: ";
+    std::cin >> result.day;
 
-        std::cout << "\tDay: ";
-        std::cin >> result.day;
+    std::cout << "\tMonth: ";
+    std::cin >> result.month;
 
-        std::cout << "\tMonth: ";
-        std::cin >> result.month;
-
-        std::cout << "\tYear: ";
-        std::cin >> result.year;
-
-        validate = validateDate(result);
-
-        if (validate)
-            std::cout << "Incorrect date!\nTry again!\n";
-    } while (validate);
-
+    std::cout << "\tYear: ";
+    std::cin >> result.year;
+    
     return result;
 }
 
@@ -669,4 +708,73 @@ Find findByDate(Case* arr, int size, Date date)
     result.size = tmpSize;
 
     return result;
+}
+
+Case* sortByPriority(Case* arr, int size)
+{
+    Case tempCase;
+    Case* tmp = new Case[size];
+
+    for (int i = 0; i < size; i++)
+    {
+        tmp[i] = arr[i];
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            if (tmp[i].priority < tmp[j].priority)
+            {
+                tempCase = tmp[i];
+                tmp[i] = tmp[j];
+                tmp[j] = tempCase;
+            }
+        }
+    }
+
+    return tmp;
+}
+
+Case* sortByDate(Case* arr, int size)
+{
+    Case tempCase;
+    Case* tmp = new Case[size];
+
+    for (int i = 0; i < size; i++)
+    {
+        tmp[i] = arr[i];
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            if (tmp[i].deadline.year < tmp[j].deadline.year)
+            {
+                tempCase = tmp[i];
+                tmp[i] = tmp[j];
+                tmp[j] = tempCase;
+            }
+            else if (tmp[i].deadline.year == tmp[j].deadline.year && tmp[i].deadline.month < tmp[j].deadline.month)
+            {
+                tempCase = tmp[i];
+                tmp[i] = tmp[j];
+                tmp[j] = tempCase;
+            }
+            else if (tmp[i].deadline.year == tmp[j].deadline.year && tmp[i].deadline.month == tmp[j].deadline.month && tmp[i].deadline.day < tmp[j].deadline.day)
+            {
+                tempCase = tmp[i];
+                tmp[i] = tmp[j];
+                tmp[j] = tempCase;
+            }
+        }
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        std::cout << tmp[i].title << " -> " << tmp[i].deadline.day << std::endl;
+    }
+
+    return tmp;
 }
