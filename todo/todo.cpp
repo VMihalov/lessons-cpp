@@ -90,29 +90,10 @@ int main()
     Case* todo = new Case[::size];
     short action = 0;
 
-    todo[0].title = "hello";
-    todo[0].description = "how are you?";
-    todo[0].priority = 4;
-    todo[0].deadline = { 0, 0, 13, 2, 2021 };
-    todo[1].title = "lorem";
-    todo[1].description = "dolor sit amet";
-    todo[1].priority = 1;
-    todo[1].deadline = { 0, 0, 10, 1, 2021 };
-    todo[2].title = "yes";
-    todo[2].description = "yeees";
-    todo[2].priority = 2;
-    todo[2].deadline = { 0, 0, 5, 6, 2021 };
-    todo[3].title = "cat";
-    todo[3].description = "dog dog dog cat cat cat pig";
-    todo[3].priority = 7;
-    todo[3].deadline = { 0, 0, 1, 1, 2021 };
-    todo[4].title = "football";
-    todo[4].description = "basketball maybe???";
-    todo[4].priority = 5;
-    todo[4].deadline = { 0, 0, 29, 3, 2021 };
-
     initializeTime(currentDate);
 
+
+    std::cin.get();
     system("cls");
 
     while (true) {
@@ -518,19 +499,48 @@ Case inputForm(Case temp) {
 
 Filter filterForDay(Case* parent, Date date, int parentSize)
 {
+    Date deadline = date;
     Filter result;
     int childSize = 0;
     Case* child = new Case[childSize];
 
+    int year[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    year[1] = (date.year % 10) % 4 == 0 ? 29 : 28;
+
+    if (deadline.day + 1 <= year[deadline.month - 1])
+    {
+        deadline.day++;
+    }
+    else if (deadline.day + 1 > year[deadline.month - 1] && deadline.month != 12)
+    {
+        deadline.day = (deadline.day + 1) - year[deadline.month - 1];
+        deadline.month++;
+    }
+    else
+    {
+        deadline.day = 1;
+        deadline.month = 1;
+        deadline.year++;
+    }
+
     for (int i = 0; i < parentSize; i++)
     {
-        if (parent[i].deadline.day == date.day && parent[i].deadline.month == date.month && parent[i].deadline.year == date.year)
+        if (parent[i].deadline.year >= date.year && parent[i].deadline.month >= date.month && parent[i].deadline.day >= date.day)
         {
-            child = resize(child, childSize);
+            if (parent[i].deadline.year <= deadline.year)
+            {
+                if (parent[i].deadline.month <= deadline.month)
+                {
+                    if (parent[i].deadline.day <= deadline.day)
+                    {
+                        child = resize(child, childSize);
 
-            child[childSize] = parent[i];
+                        child[childSize] = parent[i];
 
-            childSize++;
+                        childSize++;
+                    }
+                }
+            }
         }
     }
 
@@ -542,47 +552,49 @@ Filter filterForDay(Case* parent, Date date, int parentSize)
 
 Filter filterForWeek(Case* parent, Date date, int parentSize)
 {
+    Date deadline = date;
     Filter result;
     int childSize = 0;
     Case* child = new Case[childSize];
 
-    int day = 0;
-    bool nextMonth = false;
+    int year[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    year[1] = (date.year % 10) % 4 == 0 ? 29 : 28;
 
-    if (date.day + 7 <= 30)
+    if (deadline.day + 7 <= year[deadline.month - 1])
     {
-        day = date.day + 7;
-        nextMonth = true;
+        deadline.day += 7;
+    }
+    else if (deadline.day + 7 > year[deadline.month - 1] && deadline.month != 12)
+    {
+        deadline.day = (deadline.day + 7) - year[deadline.month - 1];
+        deadline.month++;
     }
     else
     {
-        day = (date.day + 7) % 10;
+        deadline.day = 7;
+        deadline.month = 1;
+        deadline.year++;
     }
 
     for (int i = 0; i < parentSize; i++)
     {
-        if (parent[i].deadline.year == date.year)
+        if (parent[i].deadline.year >= date.year)
         {
-            if (!nextMonth)
+            if ( (parent[i].deadline.month >= date.month && parent[i].deadline.day >= date.day) || (parent[i].deadline.month > date.month && parent[i].deadline.day <= date.day))
             {
-                if (parent[i].deadline.day <= day)
+                if (parent[i].deadline.year <= deadline.year)
                 {
-                    child = resize(child, childSize);
+                    if (parent[i].deadline.month <= deadline.month)
+                    {
+                        if (parent[i].deadline.day <= deadline.day)
+                        {
+                            child = resize(child, childSize);
 
-                    child[childSize] = parent[i];
+                            child[childSize] = parent[i];
 
-                    childSize++;
-                }
-            }
-            else
-            {
-                if (parent[i].deadline.day <= day && parent[i].deadline.month == date.month + 1)
-                {
-                    child = resize(child, childSize);
-
-                    child[childSize] = parent[i];
-
-                    childSize++;
+                            childSize++;
+                        }
+                    }
                 }
             }
         }
@@ -596,15 +608,54 @@ Filter filterForWeek(Case* parent, Date date, int parentSize)
 
 Filter filterForMonth(Case* parent, Date date, int parentSize)
 {
+    Date deadline = date;
     Filter result;
     int childSize = 0;
-    Case* child = new Case[childSize]; 
+    Case* child = new Case[childSize];
+
+    int nextMonth = 0;
+    int year[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    year[1] = (date.year % 10) % 4 == 0 ? 29 : 28;
+
+    nextMonth = date.month < 12 ? year[date.month] : year[0];
+
+    if (deadline.day + nextMonth <= year[deadline.month - 1])
+    {
+        deadline.day += nextMonth;
+    }
+    else if (deadline.day + nextMonth > year[deadline.month - 1] && deadline.month != 12)
+    {
+        deadline.day = (deadline.day + nextMonth) - year[deadline.month - 1];
+        deadline.month++;
+    }
+    else
+    {
+        deadline.day = (deadline.day + nextMonth) - year[deadline.month - 1];
+        deadline.month = 1;
+        deadline.year++;
+    }
 
     for (int i = 0; i < parentSize; i++)
     {
-        if (parent[i].deadline.year == date.year)
+        if (parent[i].deadline.year >= date.year)
         {
-            
+            if ((parent[i].deadline.month >= date.month && parent[i].deadline.day >= date.day) || (parent[i].deadline.month > date.month && parent[i].deadline.day <= date.day))
+            {
+                if (parent[i].deadline.year <= deadline.year)
+                {
+                    if (parent[i].deadline.month <= deadline.month)
+                    {
+                        if (parent[i].deadline.day <= deadline.day)
+                        {
+                            child = resize(child, childSize);
+
+                            child[childSize] = parent[i];
+
+                            childSize++;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -769,11 +820,6 @@ Case* sortByDate(Case* arr, int size)
                 tmp[j] = tempCase;
             }
         }
-    }
-
-    for (int i = 0; i < size; i++)
-    {
-        std::cout << tmp[i].title << " -> " << tmp[i].deadline.day << std::endl;
     }
 
     return tmp;
