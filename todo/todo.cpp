@@ -40,7 +40,7 @@ struct Find
     int size;
 };
 
-int size = 5;
+int size = 0;
 Date currentDate;
 
 //Controllers
@@ -52,13 +52,14 @@ void optionController();
 
 // Validate
 short validateForm(Case form);
+short validateDate(Date form);
 
 // Show table
-void render(Case*& todo, int size, short choice = -1, short sort = -1);
+void render(Case*& todo, int size, bool setInterval = true, bool setSort = true);
 
 // Working with table
 Case inputForm(Case temp = {});
-Case* resize(Case* arr, int count = ::size, short length = 1);
+Case* resize(Case* arr, int count, short length = 1);
 
 //Filters
 Filter filterForDay(Case* parent, Date date, int parentSize);
@@ -71,6 +72,12 @@ Find findByPriority(Case* arr, int size, int priority);
 Find findByDescription(Case* arr, int size, std::string description);
 Find findByDate(Case* arr, int size, Date date);
 
+//Update
+int updateTitle(Case* arr, int id, std::string title);
+int updateDescription(Case* arr, int id, std::string description);
+int updatePriority(Case* arr, int id, int priority);
+int updateDate(Case* arr, int id, Date date);
+
 //Sort
 Case* sortByPriority(Case* arr, int size);
 Case* sortByDate(Case* arr, int size);
@@ -79,7 +86,6 @@ Case* sortByDate(Case* arr, int size);
 void initializeTime(Date& date);
 Date getCurrentTime();
 Date inputDate();
-short validateDate(Date form);
 
 void errorMessage(std::string text) {
     std::cout << "\n" + text + "\n";
@@ -149,7 +155,7 @@ void createController(Case*& todos) {
         return errorMessage("Incorrect input data");
     }
 
-    todos = resize(todos);
+    todos = resize(todos, ::size);
 
     todos[::size] = form;
 
@@ -159,23 +165,69 @@ void createController(Case*& todos) {
 }
 
 void updateController(Case* todo) {
+    int row = 0;
     int id = 0;
     Case req;
 
-    std::cout << "Update by id: ";
+    render(todo, ::size, false, false);
+
+    std::cout << "\nSelect the field: 0 - all, 1 - title, 2 - description, 3 - priority, 4 - date\n> ";
+    std::cin >> row;
+
+    std::cout << "Select the id: ";
     std::cin >> id;
 
     id--;
 
-    if (id < 0 || id >= ::size) {
+    if (id < 0 || id >= ::size)
         return errorMessage("invalid id!");
+
+    switch (row)
+    {
+        case 0: {
+            req = todo[id];
+
+            req = inputForm(req);
+
+            todo[id] = req;
+
+            break;
+        }
+        case 1: {
+            std::cout << "Insert new title: ";
+            std::cin >> req.title;
+
+            updateTitle(todo, id, req.title);
+
+            break;
+        }
+        case 2: {
+            std::cout << "Insert new description: ";
+            std::cin >> req.description;
+
+            updateDescription(todo, id, req.description);
+
+            break;
+        }
+        case 3: {
+            std::cout << "Insert new priority: ";
+            std::cin >> req.priority;
+
+            updatePriority(todo, id, req.priority);
+
+            break;
+        }
+        case 4: {
+            req.deadline = inputDate();
+
+            updateDate(todo, id, req.deadline);
+
+            break;
+        }
+        default:
+            return errorMessage("Invalid row!");
+            break;
     }
-
-    req = todo[id];
-
-    req = inputForm(req);
-
-    todo[id] = req;
 
 }
 
@@ -184,7 +236,7 @@ void deleteController(Case*& todo) {
 
     system("cls");
 
-    render(todo, ::size, 4, 0);
+    render(todo, ::size, false, false);
 
     std::cout << "\nSelect the id written above to delete: ";
     std::cin >> id;
@@ -262,7 +314,7 @@ void findController(Case*& todo)
 void optionController() {
     int settings = 0;
 
-    std::cout << "1 - start time; 2 - default view mod\n> ";
+    std::cout << "1 - default time;\n> ";
     std::cin >> settings;
 
     switch (settings)
@@ -276,23 +328,28 @@ void optionController() {
     }
 }
 
-void render(Case*& todo, int size, short choice, short sort) {
-    if (choice == -1) {
-        std::cout << "Show on 1 - day, 2 - week, 3 - month, 4 - all\n";
+void render(Case*& todo, int size, bool setInterval, bool setSort) {
+    unsigned short interval = 0, sort = 0;
 
-        std::cin >> choice;
+    if (setInterval) {
+        std::cout << "Show on 0 - all, 1 - day, 2 - week, 3 - month\n";
+
+        std::cin >> interval;
     }
 
-    if (sort == -1) {
-        std::cout << "Sort by: 1 - priority; 2 - date; 0 - without sort\n> ";
+    if (setSort) {
+        std::cout << "Sort by: 0 - without sort, 1 - priority; 2 - date;\n> ";
 
         std::cin >> sort;
     }
 
     Filter response;
 
-    switch (choice)
+    switch (interval)
     {
+        case 0:
+            response = { todo, size };
+            break;
         case 1:
             response = filterForDay(todo, currentDate, size);
             break;
@@ -301,9 +358,6 @@ void render(Case*& todo, int size, short choice, short sort) {
             break;
         case 3:
             response = filterForMonth(todo, currentDate, size);
-            break;
-        case 4:
-            response = { todo, size };
             break;
         default:
             break;
@@ -801,26 +855,69 @@ Case* sortByDate(Case* arr, int size)
     {
         for (int j = 0; j < size; j++)
         {
-            if (tmp[i].deadline.year < tmp[j].deadline.year)
+            if (tmp[i].deadline.year > tmp[j].deadline.year)
             {
                 tempCase = tmp[i];
                 tmp[i] = tmp[j];
                 tmp[j] = tempCase;
             }
-            else if (tmp[i].deadline.year == tmp[j].deadline.year && tmp[i].deadline.month < tmp[j].deadline.month)
+            else if (tmp[i].deadline.year == tmp[j].deadline.year && tmp[i].deadline.month > tmp[j].deadline.month)
             {
                 tempCase = tmp[i];
                 tmp[i] = tmp[j];
                 tmp[j] = tempCase;
             }
-            else if (tmp[i].deadline.year == tmp[j].deadline.year && tmp[i].deadline.month == tmp[j].deadline.month && tmp[i].deadline.day < tmp[j].deadline.day)
+            else if (tmp[i].deadline.year == tmp[j].deadline.year && tmp[i].deadline.month == tmp[j].deadline.month && tmp[i].deadline.day > tmp[j].deadline.day)
             {
                 tempCase = tmp[i];
                 tmp[i] = tmp[j];
                 tmp[j] = tempCase;
+            }
+            else if (tmp[i].deadline.year == tmp[j].deadline.year && tmp[i].deadline.month == tmp[j].deadline.month && tmp[i].deadline.day == tmp[j].deadline.day)
+            {
+                if (tmp[i].deadline.hour > tmp[j].deadline.hour)
+                {
+                        tempCase = tmp[i];
+                        tmp[i] = tmp[j];
+                        tmp[j] = tempCase;
+                }
+                else if (tmp[i].deadline.hour == tmp[j].deadline.hour && tmp[i].deadline.minutes > tmp[j].deadline.minutes)
+                {
+                    tempCase = tmp[i];
+                    tmp[i] = tmp[j];
+                    tmp[j] = tempCase;
+                }
             }
         }
     }
 
     return tmp;
+}
+
+int updateTitle(Case* arr, int id, std::string title)
+{
+    arr[id].title = title;
+
+    return 0;
+}
+
+int updateDescription(Case* arr, int id, std::string description)
+{
+    arr[id].description = description;
+
+    return 0;
+}
+
+int updatePriority(Case* arr, int id, int priority)
+{
+    arr[id].priority = priority;
+
+    return 0;
+}
+
+int updateDate(Case* arr, int id, Date date)
+{
+    arr[id].deadline = date;
+
+    return 0;
 }
