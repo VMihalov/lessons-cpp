@@ -88,7 +88,7 @@ Date getCurrentTime();
 Date inputDate();
 
 void errorMessage(std::string text) {
-    std::cout << "\n" + text + "\n";
+    std::cout << "\n" + text + "\n\n";
 }
 
 int main()
@@ -146,44 +146,58 @@ int main()
 
 
 void createController(Case*& todos) {
-    Case form = inputForm();
-
-    short validate = validateForm(form);
-
-    if (validate)
+    try
     {
-        return errorMessage("Incorrect input data");
+        Case form = inputForm();
+
+        short validate = validateForm(form);
+
+        if (validate)
+        {
+            throw "Invalid validate";
+        }
+
+        todos = resize(todos, ::size);
+
+        todos[::size] = form;
+
+        ::size++;
+
+        render(todos, ::size, false, false);
     }
+    catch (const char* exception)
+    {
+        std::cin.clear();
+        std::cin.ignore();
 
-    todos = resize(todos, ::size);
-
-    todos[::size] = form;
-
-    ::size++;
-
-    render(todos, ::size);
+        std::cerr << "\nError: " << exception << '\n';
+    }
 }
 
 void updateController(Case* todo) {
-    int row = 0;
-    int id = 0;
-    Case req;
-
-    render(todo, ::size, false, false);
-
-    std::cout << "\nSelect the field: 0 - all, 1 - title, 2 - description, 3 - priority, 4 - date\n> ";
-    std::cin >> row;
-
-    std::cout << "Select the id: ";
-    std::cin >> id;
-
-    id--;
-
-    if (id < 0 || id >= ::size)
-        return errorMessage("invalid id!");
-
-    switch (row)
+    try
     {
+        int row = 0;
+        int id = 0;
+        Case req;
+
+        render(todo, ::size, false, false);
+
+        std::cout << "Select the id: ";
+        std::cin >> id;
+
+        id--;
+
+        if (id < 0 || id >= ::size)
+            throw "Invalid id";
+
+        std::cout << "\nSelect the field: 0 - all, 1 - title, 2 - description, 3 - priority, 4 - date\n> ";
+        std::cin >> row;
+
+        std::cin.ignore();
+
+        switch (row)
+        {
         case 0: {
             req = todo[id];
 
@@ -195,7 +209,7 @@ void updateController(Case* todo) {
         }
         case 1: {
             std::cout << "Insert new title: ";
-            std::cin >> req.title;
+            std::getline(std::cin, req.title);
 
             updateTitle(todo, id, req.title);
 
@@ -203,7 +217,7 @@ void updateController(Case* todo) {
         }
         case 2: {
             std::cout << "Insert new description: ";
-            std::cin >> req.description;
+            std::getline(std::cin, req.description);
 
             updateDescription(todo, id, req.description);
 
@@ -225,56 +239,77 @@ void updateController(Case* todo) {
             break;
         }
         default:
-            return errorMessage("Invalid row!");
+            throw "Invalid row";
             break;
+        }
     }
+    catch (const char* exception)
+    {
+        std::cin.clear();
+        std::cin.ignore();
 
+        std::cerr << "\nError: " << exception << '\n';
+    }
 }
 
 void deleteController(Case*& todo) {
-    int id = 0;
-
-    system("cls");
-
-    render(todo, ::size, false, false);
-
-    std::cout << "\nSelect the id written above to delete: ";
-    std::cin >> id;
-
-    id--;
-
-    if (id < 0 || id >= ::size) {
-        return errorMessage("Invalid id!");
-    }
-
-    for (int i = id; i < ::size - 1; i++)
+    try
     {
-        todo[i] = todo[i + 1];
+        int id = 0;
+
+        system("cls");
+
+        render(todo, ::size, false, false);
+
+        std::cout << "\nSelect the id written above to delete: ";
+        std::cin >> id;
+
+        id--;
+
+        if (id < 0 || id >= ::size) {
+            throw "Invalid id";
+        }
+
+        for (int i = id; i < ::size - 1; i++)
+        {
+            todo[i] = todo[i + 1];
+        }
+
+        todo = resize(todo, ::size, -1);
+
+        ::size--;
     }
+    catch (const char* exception)
+    {
+        std::cin.clear();
+        std::cin.ignore();
 
-    todo = resize(todo, ::size, -1);
-
-    ::size--;
+        std::cerr << "\nError: " << exception << '\n';
+    }
 }
 
 void findController(Case*& todo)
 {
-    short choice = 0;
-    Date date;
-    int priority = 0;
-    Find result;
-    std::string text;
-
-    std::cout << "Find by: 1 - title; 2 - description; 3 - priority; 4 - deadline\n> ";
-
-    std::cin >> choice;
-
-    switch (choice)
+    try
     {
+        short choice = 0;
+        Date date;
+        int priority = 0;
+        Find result;
+        std::string text;
+
+        std::cout << "Find by: 1 - title; 2 - description; 3 - priority; 4 - deadline\n> ";
+
+        std::cin >> choice;
+
+        std::cin.ignore();
+
+        switch (choice)
+        {
         case 1:
         {
             std::cout << "Title: ";
-            std::cin >> text;
+            std::getline(std::cin, text);
 
             result = findByTitle(todo, ::size, text);
             break;
@@ -282,7 +317,7 @@ void findController(Case*& todo)
         case 2:
         {
             std::cout << "Description: ";
-            std::cin >> text;
+            std::getline(std::cin, text);
 
             result = findByDescription(todo, ::size, text);
             break;
@@ -304,27 +339,45 @@ void findController(Case*& todo)
             break;
         }
         default:
-            std::cout << "Incorrect value!\n";
+            throw "Incorrect number";
             break;
-    }
+        }
 
-    render(result.result, result.size, 0);
+        render(result.result, result.size, 0);
+    }
+    catch (const char* exception)
+    {
+        std::cin.clear();
+        std::cin.ignore();
+
+        std::cerr << "\nError: " << exception << '\n';
+    }
 }
 
 void optionController() {
-    int settings = 0;
-
-    std::cout << "1 - default time;\n> ";
-    std::cin >> settings;
-
-    switch (settings)
+    try
     {
-    case 1:
-        initializeTime(currentDate);
-        break;
-    default:
-        return errorMessage("Undefined number");
-        break;
+        int settings = 0;
+
+        std::cout << "1 - default time;\n> ";
+        std::cin >> settings;
+
+        switch (settings)
+        {
+        case 1:
+            initializeTime(currentDate);
+            break;
+        default:
+            throw "Incorrect number";
+            break;
+        }
+    }
+    catch (const char* exception)
+    {
+        std::cin.clear();
+        std::cin.ignore();
+
+        std::cerr << "\nError: " << exception << '\n';
     }
 }
 
@@ -511,42 +564,41 @@ Case inputForm(Case temp) {
     Case res = temp;
     short error;
 
+    std::cin.ignore();
+
     std::cout << "Title: (=" + temp.title + ") : ";
-    //std::cin.ignore();
-    //std::getline(std::cin, res.title);
-    std::cin >> res.title;
+    std::getline(std::cin, res.title);
 
     std::cout << "Description: (=" + temp.description + ") : ";
-    //std::cin.ignore();
-    //std::getline(std::cin, res.description);
-    std::cin >> res.description;
+    std::getline(std::cin, res.description);
 
     std::cout << "Priority: (=" + std::to_string(temp.priority) + ") : ";
     std::cin >> res.priority;
 
     std::cout << "Deadline:\n";
-    while (true) {
-        std::cout << "\tHour: ";
-        std::cin >> res.deadline.hour;
-        std::cout << "\tMinutes: ";
-        std::cin >> res.deadline.minutes;
-        std::cout << "\tDay: ";
-        std::cin >> res.deadline.day;
-        std::cout << "\tMonth: ";
-        std::cin >> res.deadline.month;
-        std::cout << "\tYear: ";
-        std::cin >> res.deadline.year;
+    std::cout << "\tHour: ";
+    std::cin >> res.deadline.hour;
+    std::cout << "\tMinutes: ";
+    std::cin >> res.deadline.minutes;
+    std::cout << "\tDay: ";
+    std::cin >> res.deadline.day;
+    std::cout << "\tMonth: ";
+    std::cin >> res.deadline.month;
+    std::cout << "\tYear: ";
+    std::cin >> res.deadline.year;
 
-        error = validateDate(res.deadline);
+    error = validateDate(res.deadline);
 
-        if (error)
-            errorMessage("Try again!");
-        else
-            break;
-    }
+    if (error)
+        throw "Invalid date";
 
     res.created_at = "";
     res.updated_at = "";
+
+    while (!std::cin.good())
+    {
+        throw "Incorrectly entered data";
+    }
 
     return res;
 }
