@@ -5,6 +5,7 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <fstream>
 
 struct Date;
 struct Case;
@@ -44,6 +45,7 @@ int size = 0;
 Date currentDate;
 
 //Controllers
+void router();
 void createController(Case*& todo);
 void updateController(Case* todo);
 void deleteController(Case*& todo);
@@ -87,83 +89,58 @@ void initializeTime(Date& date);
 Date getCurrentTime();
 Date inputDate();
 
-void errorMessage(std::string text) {
-    std::cout << "\n" + text + "\n\n";
-}
-
 int main()
 {
-    Case* todo = new Case[::size];
-    short action = 0;
-
-    initializeTime(currentDate);
-
-
-    std::cin.get();
-    system("cls");
-
-    while (true) {
-        std::cout << "Menu: 0 - view; 1 - Create; 2 - Update; 3 - Delete; 4 - Find; 5 - Sort by; 6 - Settings; -1 - Exit\n> ";
-        std::cin >> action;
-
-        if (action == -1)
-            break;
-
-        switch (action)
-        {
-        case 0:
-            render(todo, ::size);
-            break;
-        case 1:
-            createController(todo);
-            break;
-        case 2:
-            updateController(todo);
-            break;
-        case 3:
-            deleteController(todo);
-            break;
-        case 4:
-            findController(todo);
-            break;
-        case 5:
-            break;
-        case 6:
-            optionController();
-            break;
-        default:
-            std::cout << "Try again!\n";
-            break;
-        }
-
-
-    }
-
-    delete[] todo;
-
-    return 0;
-}
-
-
-void createController(Case*& todos) {
     try
     {
-        Case form = inputForm();
+        Case* todo = new Case[::size];
+        short action = 0;
 
-        short validate = validateForm(form);
+        initializeTime(currentDate);
 
-        if (validate)
-        {
-            throw "Invalid validate";
+        std::cin.get();
+        system("cls");
+
+        while (true) {
+            std::cout << "Menu: 0 - view; 1 - Create; 2 - Update; 3 - Delete; 4 - Find; 5 - Sort by; 6 - Settings; -1 - Exit\n> ";
+            std::cin >> action;
+
+            if (action == -1)
+                break;
+
+            switch (action)
+            {
+            case 0:
+                render(todo, ::size);
+                break;
+            case 1:
+                createController(todo);
+                break;
+            case 2:
+                updateController(todo);
+                break;
+            case 3:
+                deleteController(todo);
+                break;
+            case 4:
+                findController(todo);
+                break;
+            case 5:
+                break;
+            case 6:
+                optionController();
+                break;
+            default:
+                std::cout << "Try again!\n";
+                break;
+            }
+
+
         }
 
-        todos = resize(todos, ::size);
+        delete[] todo;
 
-        todos[::size] = form;
-
-        ::size++;
-
-        render(todos, ::size, false, false);
+        return 0;
     }
     catch (const char* exception)
     {
@@ -172,212 +149,191 @@ void createController(Case*& todos) {
 
         std::cerr << "\nError: " << exception << '\n';
     }
+}
+
+void createController(Case*& todos) {
+    Case form = inputForm();
+
+    short validate = validateForm(form);
+
+    if (validate)
+    {
+        throw "Invalid validate";
+    }
+
+    todos = resize(todos, ::size);
+
+    todos[::size] = form;
+
+    ::size++;
+
+    render(todos, ::size, false, false);
 }
 
 void updateController(Case* todo) {
-    try
+    int row = 0;
+    int id = 0;
+    Case req;
+
+    render(todo, ::size, false, false);
+
+    std::cout << "Select the id: ";
+    std::cin >> id;
+
+    id--;
+
+    if (id < 0 || id >= ::size)
+        throw "Invalid id";
+
+    std::cout << "\nSelect the field: 0 - all, 1 - title, 2 - description, 3 - priority, 4 - date\n> ";
+    std::cin >> row;
+
+    std::cin.ignore();
+
+    switch (row)
     {
-        int row = 0;
-        int id = 0;
-        Case req;
+    case 0: {
+        req = todo[id];
 
-        render(todo, ::size, false, false);
+        req = inputForm(req);
 
-        std::cout << "Select the id: ";
-        std::cin >> id;
+        todo[id] = req;
 
-        id--;
-
-        if (id < 0 || id >= ::size)
-            throw "Invalid id";
-
-        std::cout << "\nSelect the field: 0 - all, 1 - title, 2 - description, 3 - priority, 4 - date\n> ";
-        std::cin >> row;
-
-        std::cin.ignore();
-
-        switch (row)
-        {
-        case 0: {
-            req = todo[id];
-
-            req = inputForm(req);
-
-            todo[id] = req;
-
-            break;
-        }
-        case 1: {
-            std::cout << "Insert new title: ";
-            std::getline(std::cin, req.title);
-
-            updateTitle(todo, id, req.title);
-
-            break;
-        }
-        case 2: {
-            std::cout << "Insert new description: ";
-            std::getline(std::cin, req.description);
-
-            updateDescription(todo, id, req.description);
-
-            break;
-        }
-        case 3: {
-            std::cout << "Insert new priority: ";
-            std::cin >> req.priority;
-
-            updatePriority(todo, id, req.priority);
-
-            break;
-        }
-        case 4: {
-            req.deadline = inputDate();
-
-            updateDate(todo, id, req.deadline);
-
-            break;
-        }
-        default:
-            throw "Invalid row";
-            break;
-        }
+        break;
     }
-    catch (const char* exception)
-    {
-        std::cin.clear();
-        std::cin.ignore();
+    case 1: {
+        std::cout << "Insert new title: ";
+        std::getline(std::cin, req.title);
 
-        std::cerr << "\nError: " << exception << '\n';
+        updateTitle(todo, id, req.title);
+
+        break;
+    }
+    case 2: {
+        std::cout << "Insert new description: ";
+        std::getline(std::cin, req.description);
+
+        updateDescription(todo, id, req.description);
+
+        break;
+    }
+    case 3: {
+        std::cout << "Insert new priority: ";
+        std::cin >> req.priority;
+
+        updatePriority(todo, id, req.priority);
+
+        break;
+    }
+    case 4: {
+        req.deadline = inputDate();
+
+        updateDate(todo, id, req.deadline);
+
+        break;
+    }
+    default:
+        throw "Invalid row";
+        break;
     }
 }
 
 void deleteController(Case*& todo) {
-    try
-    {
-        int id = 0;
+    int id = 0;
 
-        system("cls");
+    system("cls");
 
-        render(todo, ::size, false, false);
+    render(todo, ::size, false, false);
 
-        std::cout << "\nSelect the id written above to delete: ";
-        std::cin >> id;
+    std::cout << "\nSelect the id written above to delete: ";
+    std::cin >> id;
 
-        id--;
+    id--;
 
-        if (id < 0 || id >= ::size) {
-            throw "Invalid id";
-        }
-
-        for (int i = id; i < ::size - 1; i++)
-        {
-            todo[i] = todo[i + 1];
-        }
-
-        todo = resize(todo, ::size, -1);
-
-        ::size--;
+    if (id < 0 || id >= ::size) {
+        throw "Invalid id";
     }
-    catch (const char* exception)
-    {
-        std::cin.clear();
-        std::cin.ignore();
 
-        std::cerr << "\nError: " << exception << '\n';
+    for (int i = id; i < ::size - 1; i++)
+    {
+        todo[i] = todo[i + 1];
     }
+
+    todo = resize(todo, ::size, -1);
+
+    ::size--;
 }
 
 void findController(Case*& todo)
 {
-    try
+    short choice = 0;
+    Date date;
+    int priority = 0;
+    Find result;
+    std::string text;
+
+    std::cout << "Find by: 1 - title; 2 - description; 3 - priority; 4 - deadline\n> ";
+
+    std::cin >> choice;
+
+    std::cin.ignore();
+
+    switch (choice)
     {
-        short choice = 0;
-        Date date;
-        int priority = 0;
-        Find result;
-        std::string text;
-
-        std::cout << "Find by: 1 - title; 2 - description; 3 - priority; 4 - deadline\n> ";
-
-        std::cin >> choice;
-
-        std::cin.ignore();
-
-        switch (choice)
-        {
-        case 1:
-        {
-            std::cout << "Title: ";
-            std::getline(std::cin, text);
-
-            result = findByTitle(todo, ::size, text);
-            break;
-        }
-        case 2:
-        {
-            std::cout << "Description: ";
-            std::getline(std::cin, text);
-
-            result = findByDescription(todo, ::size, text);
-            break;
-        }
-        case 3:
-        {
-            std::cout << "Priority: ";
-            std::cin >> priority;
-
-            result = findByPriority(todo, ::size, priority);
-            break;
-        }
-        case 4:
-        {
-            std::cout << "Date:\n";
-            date = inputDate();
-
-            result = findByDate(todo, ::size, date);
-            break;
-        }
-        default:
-            throw "Incorrect number";
-            break;
-        }
-
-        render(result.result, result.size, 0);
-    }
-    catch (const char* exception)
+    case 1:
     {
-        std::cin.clear();
-        std::cin.ignore();
+        std::cout << "Title: ";
+        std::getline(std::cin, text);
 
-        std::cerr << "\nError: " << exception << '\n';
+        result = findByTitle(todo, ::size, text);
+        break;
     }
+    case 2:
+    {
+        std::cout << "Description: ";
+        std::getline(std::cin, text);
+
+        result = findByDescription(todo, ::size, text);
+        break;
+    }
+    case 3:
+    {
+        std::cout << "Priority: ";
+        std::cin >> priority;
+
+        result = findByPriority(todo, ::size, priority);
+        break;
+    }
+    case 4:
+    {
+        std::cout << "Date:\n";
+        date = inputDate();
+
+        result = findByDate(todo, ::size, date);
+        break;
+    }
+    default:
+        throw "Incorrect number";
+        break;
+    }
+
+    render(result.result, result.size, 0);
 }
 
 void optionController() {
-    try
+    int settings = 0;
+
+    std::cout << "1 - default time;\n> ";
+    std::cin >> settings;
+
+    switch (settings)
     {
-        int settings = 0;
-
-        std::cout << "1 - default time;\n> ";
-        std::cin >> settings;
-
-        switch (settings)
-        {
-        case 1:
-            initializeTime(currentDate);
-            break;
-        default:
-            throw "Incorrect number";
-            break;
-        }
-    }
-    catch (const char* exception)
-    {
-        std::cin.clear();
-        std::cin.ignore();
-
-        std::cerr << "\nError: " << exception << '\n';
+    case 1:
+        initializeTime(currentDate);
+        break;
+    default:
+        throw "Incorrect number";
+        break;
     }
 }
 
@@ -430,11 +386,11 @@ void render(Case*& todo, int size, bool setInterval, bool setSort) {
 
     system("cls");
 
-    std::cout << std::setw(3) << std::left << "№" << std::setw(10) << "Title" << std::setw(30) << "Description" << std::setw(10) << "Priority" << std::setw(10) << "Deadline" << std::endl;
+    std::cout << std::setw(3) << std::left << "№" << std::setw(20) << "Title" << std::setw(40) << "Description" << std::setw(10) << "Priority" << std::setw(10) << "Deadline" << std::endl;
 
     for (int i = 0; i < response.size; i++)
     {
-        std::cout << std::setw(3) << std::left << i + 1 << std::setw(10) << response.arr[i].title << std::setw(30) << response.arr[i].description << std::setw(10) << response.arr[i].priority << std::setw(10) << std::to_string(response.arr[i].deadline.hour) + ":" + std::to_string(response.arr[i].deadline.minutes) + " " + std::to_string(response.arr[i].deadline.day) + "." + std::to_string(response.arr[i].deadline.month) + "." + std::to_string(response.arr[i].deadline.year) << std::endl;
+        std::cout << std::setw(3) << std::left << i + 1 << std::setw(20) << response.arr[i].title << std::setw(40) << response.arr[i].description << std::setw(10) << response.arr[i].priority << std::setw(10) << std::to_string(response.arr[i].deadline.hour) + ":" + std::to_string(response.arr[i].deadline.minutes) + " " + std::to_string(response.arr[i].deadline.day) + "." + std::to_string(response.arr[i].deadline.month) + "." + std::to_string(response.arr[i].deadline.year) << std::endl;
     }
 
 }
