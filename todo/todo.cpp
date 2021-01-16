@@ -148,6 +148,8 @@ int main()
         std::cin.ignore();
 
         std::cerr << "\nError: " << exception << '\n';
+
+        return 1;
     }
 }
 
@@ -419,6 +421,11 @@ void initializeTime(Date& date) {
             if (validate)
                 std::cout << "Incorrect date!\nTry again!\n";
         } while (validate);
+    }
+
+    if (!std::cin.good())
+    {
+        throw "Incorrectly entered data";
     }
 }
 
