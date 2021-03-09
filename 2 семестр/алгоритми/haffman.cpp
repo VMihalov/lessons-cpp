@@ -2,7 +2,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <regex>
 
 struct NodeValue {
     char key = '#';
@@ -25,25 +24,20 @@ std::vector <Node*> changeToTree(std::map <char, int> pairs);
 Node* buildNode(std::vector <Node*> val);
 std::map <char, std::string> countRoutes(Node* tree, std::string road = "");
 std::string codeText(std::map <char, std::string> map, std::string text);
-std::string decodeText(std::map <char, std::string> bits, std::string text);
+std::string decodeText(Node* tree, std::string text);
 void preOrder(Node* tree, int t = 1, int max = 0);
 
 int main() {
-    std::string text = "hello how are you good buy buy no yes okey ohhh";
+    std::string text = "beep boop beer";
     std::map <char, std::string> keys;
     std::map <char, int> frequency = countOrder(text);
     std::vector <Node*> tree = changeToTree(frequency);
 
     Node* forest = buildNode(tree);
     keys = countRoutes(forest);
-
-    /*for (auto v : keys) {
-        std::cout << v.first << " => " << v.second << std::endl;
-    }*/
-
-    std::cout << "String: " << text << std::endl;
+    
     std::cout << "Coded: " << codeText(keys, text) << std::endl;
-    std::cout << "Decoded: " << decodeText(keys, codeText(keys, text)) << std::endl;
+    std::cout << "Decoded: " << decodeText(forest, codeText(keys, text)) << std::endl;
 
     return 0;
 }
@@ -138,17 +132,27 @@ std::string codeText(std::map <char, std::string> map, std::string text) {
     std::string result;
 
     for (auto v : text) {
-        result += map[v] + ' ';
+        result += map[v];
     }
 
     return result;
 }
 
-std::string decodeText(std::map <char, std::string> bits, std::string text) {
-    for (auto bit : bits) {
-        std::string s(1, bit.first);
-        text = std::regex_replace(text, std::regex("\\b" + bit.second + "\\b", std::regex::ECMAScript), s);
+std::string decodeText(Node* tree, std::string text) {
+    static std::string res = "";
+    static Node* root = tree;
+
+    if (tree->left == nullptr && tree->right == nullptr) {
+        res += tree->value.key;
+
+        return decodeText(root, text);
     }
 
-    return text;
+    if (text[0] == '0')
+        return decodeText(tree->left, text.substr(1));
+    else if (text[0] == '1')
+        return decodeText(tree->right, text.substr(1));
+    else return res;
+
+    return res;
 }
