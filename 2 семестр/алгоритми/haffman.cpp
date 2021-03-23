@@ -91,13 +91,8 @@ Node* buildNode(std::vector <Node*> val) {
 
     Node* node = new Node({'#', val[0]->value.value + val[1]->value.value});
 
-    if (val[0]->value.value < val[1]->value.value) {
-        node->left = val[0];
-        node->right = val[1];
-    } else {
-        node->left = val[1];
-        node->right = val[0];
-    }
+    node->left = val[0];
+    node->right = val[1];
 
     val.erase(val.begin());
     val[0] = node;
