@@ -12,27 +12,35 @@ struct Book {
 };
 
 vector <Book> readFile(string fileName);
-vector <Book> sortBooksByYear(vector <Book> books);
+vector <Book> sortByYearAndAlphabet(vector <Book> books);
+void push(string fileName, vector <Book> books);
 
 int main() {
+    string fileName = "library.txt";
     vector <Book> books;
 
-    books = readFile("library.txt");
-    books = sortBooksByYear(books);
-
-    for (auto v : books)
-        cout << v.title << " | " << v.author << " | " << v.year << endl;
+    books = readFile(fileName);
+    books = sortByYearAndAlphabet(books);
+    push(fileName, books);
 
     return 0;
 }
 
-vector <Book> sortBooksByYear(vector <Book> books) {
+vector <Book> sortByYearAndAlphabet(vector <Book> books) {
     for (int i = 0; i < books.size(); i++) {
         for (int j = 0; j < books.size(); j++) {
             if (books[i].year < books[j].year) {
                 Book tmp = books[i];
                 books[i] = books[j];
                 books[j] = tmp;
+            }
+
+            if (books[i].year == books[j].year) {
+                if(books[i].author < books[j].author) {
+                    Book tmp = books[i];
+                    books[i] = books[j];
+                    books[j] = tmp;
+                }
             }
         }
     }
@@ -74,4 +82,21 @@ vector <Book> readFile(string fileName) {
     file.close();
 
     return books;
+}
+
+void push(string fileName, vector <Book> books) {
+    fstream file;
+
+    file.open(fileName);
+
+    if (!file.is_open())
+        throw "Error opening file!\n";
+
+    file.clear();
+
+    for (const auto book: books) {
+        file << book.title << ";" << book.author << ";" << book.year << ";\n";
+    }
+
+    file.close();
 }
