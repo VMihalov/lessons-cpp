@@ -50,7 +50,6 @@ void read(string fileName) {
   if (!f.is_open()) return;
   
   f.read((char*)&tmp, sizeof(tmp));
-  
 
   f.close();
 }

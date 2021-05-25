@@ -51,10 +51,6 @@ struct List {
     Node* a = first;
     Node* b = first->next;
  
-    Node* tmp = new Node("#", 0);
-
-    Node* c = new Node("Its me Mario", 1);
- 
     while (a->next) {
       while (b) {
         if (a->product.sum < b->product.sum) {
@@ -63,6 +59,21 @@ struct List {
           // left->product = right->product;
           // right->product = temp->product;
           
+          if(a->prev == NULL){   //если "взятая" структура первая в списке
+            *first = a->next;                                    
+          }
+          else a->pred->next = a->next;
+
+          if(b->next == 0){   //если структура, после которой вставляется "взятая" структура, последняя в списке 
+            *close = b;
+          }
+          else b->next->pred = a;           
+            a->next->pred = b->pred;     
+            a->next = b->next;     
+            b->next = a;                          
+            a->pred = b;
+            b = a->next;
+
         }
 
         if (a->product.sum == b->product.sum) {
@@ -80,12 +91,7 @@ struct List {
     }
   }
 
-  void swap(Node* &a, Node* &b) {
-    Node* tmpA = a; 
-    Node* tmpB = b;
-
-    
-  }
+  
 
   void print() {
     if (isEmpty()) return;
@@ -123,13 +129,14 @@ int main() {
 }
 
 void parseFile(string fileName, List &list) {
+  Product tmp("", 0);
   ifstream file;
   string buffer = "";
 
   file.open(fileName);
 
   while (getline(file, buffer)) {
-    Product tmp = parseString(buffer);
+    tmp = parseString(buffer);
 
     list.push(tmp.name, tmp.sum);
   }

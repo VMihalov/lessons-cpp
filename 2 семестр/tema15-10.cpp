@@ -1,5 +1,4 @@
 #include <iostream>
-#include <string>
 
 using namespace std;
 
@@ -111,7 +110,7 @@ struct List {
 
 int main() {
   List list;
-  int size = 41, step = 3;
+  int size = 10, step = 3;
 
   for (int i = 1; i <= size; i++) {
     list.push(i);
