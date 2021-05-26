@@ -7,30 +7,32 @@
 using namespace std;
 
 int main() {
-    const string fileTitle = "./доделал/numbers.txt";
-    const string newFileTitle = "sortedNumbers.txt";
+    const string fileTitle = "./numbers.txt";
+    const string newFileTitle = "./sortedNumbers.txt";
     int* numbers = new int[TRIMSIZE];
     int count = 0;
     int buffer = 0;
-    fstream file;
+    fstream fileOne, fileTwo;
 
-    file.open(fileTitle);
+    fileOne.open(fileTitle);
+    fileTwo.open(newFileTitle, ios::out | ios::trunc);
 
-    while (!file.eof()) {
-        file >> buffer;
+    while (!fileOne.eof()) {
+        fileOne >> buffer;
 
         if (count < TRIMSIZE) {
             numbers[count] = buffer;
             count++;
         } else {
-            cout << buffer << " ";    
+            fileTwo << buffer << " "; 
         }
     }
 
     for (int i = 0; i < TRIMSIZE; i++)
-        cout << numbers[i] << " ";
+        fileTwo << numbers[i] << " ";
 
-    file.close();
+    fileOne.close();
+    fileTwo.close();
 
     return 0;
 }
