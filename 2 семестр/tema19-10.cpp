@@ -26,6 +26,7 @@ std::map <char, std::string> countRoutes(Node* tree, std::string road = "");
 std::string codeText(std::map <char, std::string> map, std::string text);
 std::string decodeText(Node* tree, std::string text);
 void preOrder(Node* tree, int t = 1, int max = 0);
+int height(Node* tree);
 
 int main() {
     std::string text = "beep boop beer";
@@ -34,10 +35,20 @@ int main() {
     std::vector <Node*> tree = changeToTree(frequency);
 
     Node* forest = buildNode(tree);
-    keys = countRoutes(forest);
     
-    std::cout << "Coded: " << codeText(keys, text) << std::endl;
-    std::cout << "Decoded: " << decodeText(forest, codeText(keys, text)) << std::endl;
+    std::cout << height(forest);
+
+    return 0;
+}
+
+int height(Node* tree){
+    int l, r;
+
+    if(tree != NULL){
+        l = (tree->left  != NULL) ? height(tree->left)  : 0;
+        r = (tree->right != NULL) ? height(tree->right) : 0;
+        return ((l > r) ? l : r) + 1;
+    }
 
     return 0;
 }
