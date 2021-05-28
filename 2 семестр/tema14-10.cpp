@@ -2,143 +2,150 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
 struct Street {
-  string name;
-  string house;
+  char name[30];
+  char house[30];
   int year;
 };
 
-void read(string fileName);
-void write(string fileName, vector <Street> arr);
+bool comparator(Street a, Street b) {
+  return a.year < b.year;
+}
+
+void read(vector <Street> &arr, string fileName);
+void write(vector <Street> arr, string fileName);
+int searchBinary(vector <Street> &arr, int key);
+void countAndRender(vector <Street> &arr, int n, int m);
+void insert(vector <Street> &arr, int length);
+void render(vector <Street> &arr);
 
 int main() {
-  int size = 3;
+  try {
+    vector <Street> arr;
+    int n, m;
 
-  vector <Street> arr;
+    read(arr, "street.bin");
 
-  // Street tmp;
-  // for (int i = 0; i < size; i++) {
-  //   cout << i + 1 << ")\n";
-  //   cout << "\tStreet: ";
-  //   cin >> tmp.name;
-  //   cout << "\tHouse: ";
-  //   cin >> tmp.house;
-  //   cout << "\tYear: ";
-  //   cin >> tmp.year;
-  //   arr.push_back(tmp);
-  // }
+    sort(arr.begin(), arr.end(), comparator);
 
-  // arr.push_back(tmp);
+    cout << "From binary file:" << endl;
+    
+    render(arr);
 
-  //write("street.bin", arr);
+    cout << endl;
 
-  read("street.bin");
+    cout << "Infinum ";
+    cin >> n;
 
+    cout << "Suprerum ";
+    cin >> m;
 
-  return 0;
+    countAndRender(arr, n, m);
+
+    return 0;
+  } catch(const char* error) {
+    cerr << error << endl;
+
+    return 1;
+  }
 }
 
-void read(string fileName) {
-  ifstream f;
+void read(vector <Street> &arr, string fileName) {
+  ifstream file;
   Street tmp;
 
-  f.open("street.bin", ios::binary);
+  file.open("street.bin", ios::binary);
 
-  if (!f.is_open()) return;
+  if (!file.is_open()) throw "Error opening file";
   
-  f.read((char*)&tmp, sizeof(tmp));
+  int i = 1;
+  while (file.read((char*)&tmp, sizeof(Street))) {
+    arr.push_back(tmp);
+    file.seekg(i * sizeof(Street));
+    i++;
+  }
 
-  f.close();
+  arr.pop_back();
+
+  file.close();
 }
 
-void write(string fileName, vector <Street> arr) {
+void write(vector <Street> arr, string fileName) {
   ofstream file;
 
   file.open(fileName, ios::binary);
 
-  for (auto v : arr)
-    file.write((char *) &v, sizeof(Street));
+  for (auto street : arr)
+    file.write((char*)&street, sizeof(Street));
 
   file.close();
 }
 
+void countAndRender(vector <Street> &arr, int n, int m) {
+  if (n > m) throw "Incorrect borders";
 
+  int inf = searchBinary(arr, n);
+  int sup = searchBinary(arr, m);
+  
+  if (inf == -1 || sup == -1) throw "Incorrect borders";
 
+  cout << "Number of streets from " << n << " to " << m << " = " << sup - inf << endl;
 
+  for (int i = inf; i < sup; i++)
+    cout << arr[i].name << " " << arr[i].house << " " << arr[i].year << endl;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-#include <iostream>
-#include <fstream>
-#include <vector>
-
-using namespace std;
-
-int search(vector <int> arr, int x) {
-  int j = -1;
-  int l = 0;
-  int r = arr.size() - 1;
-  int m;
-
-  while (l <= r) {
-    m = ( l + r ) / 2;
-
-    if (x < arr[m]) r = m - 1;
-    else if (x > arr[m]) l = m + 1;
-    else {
-      j = m;
-
-      break;
-    }
+int searchBinary(vector <Street> &arr, int key) {
+  if (arr[0].year > key || arr[arr.size() - 1].year < key) {
+    return -1;
   }
 
-  return j;
-} 
+  if (arr[0].year == key) return 0;
 
-int main() {
-  fstream file;
-  int number;
-  vector <int> buffer;
+  if (arr[arr.size() - 1].year == key) return arr.size();
 
-  file.open("numbers.txt");
+  int m, l = 0, r = arr.size() - 1;
 
-  while (!file.eof()) {
-    file >> number;
+  while (r > l) {
+    m = (l + r) / 2;
 
-    buffer.push_back(number);
+    if (arr[m].year < key && arr[m + 1].year > key) return m + 1;
+    else if (arr[m].year > key && arr[m - 1].year < key) return m;
+    else if (arr[m].year < key) l = m + 1; 
+    else if (arr[m].year > key) r = m - 1;
+    else return m + 1;
   }
 
-  int x = 0;
-  cout << "X: ";
-  cin >> x;
+  if (arr[l].year == key) {
+    return l;
+  } else {
+    return -1;
+  }
+}
 
-  int pos = search(buffer, x);
+void insert(vector <Street> &arr, int length) {
+  Street tmp;
 
-  cout << "POS: " << pos << endl;
+  for (int i = 0; i < length; i++) {
+    cout << i + 1 << ")\n";
+    cout << "\tStreet: ";
+    cin >> tmp.name;
+    cout << "\tHouse: ";
+    cin >> tmp.house;
+    cout << "\tYear: ";
+    cin >> tmp.year;
 
-  int nextPos = pos;
-
-  while (buffer[pos] == buffer[nextPos]) {
-    cout << nextPos << ") " << buffer[nextPos] << endl;
-    nextPos++;
+    arr.push_back(tmp);
   }
 
-  cout << endl << nextPos - pos << endl;
+  arr.push_back(tmp);
+}
 
-  file.close();
-
-  return 0;
+void render(vector <Street> &arr) {
+  for (Street v : arr)
+    cout << v.name << "   " << v.house << "   " << v.year << endl;
 }

@@ -11,9 +11,9 @@ int f(int n)
 }
  
 int main() {
-    //cout << "f(106) " << f(106) << endl;
+    cout << "f(106) " << f(106) << endl;
     cout << "f(99) " << f(99) << endl;
-    //cout << "f(85) " << f(85) << endl;
+    cout << "f(85) " << f(85) << endl;
 
     return 0;
 }

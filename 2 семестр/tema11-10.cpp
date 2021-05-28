@@ -1,83 +1,41 @@
 #include <iostream>
 #include <fstream>
-#include <algorithm>
 #include <string>
+#include <set>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
-int binarySearch(string arr, char elem);
+// File
+void readFile(string filename, set <char> &kit);
 
 int main() {
-    fstream f, g;
-    string bufferOne, bufferTwo;
-    char buffer;
-    int countOne = 0, countTwo = 0;
+  set <char> f, g;
+  vector <int> res;
 
+  readFile("f.bin", f);
+  readFile("g.bin", g);
 
-    f.open("f.txt");
-    g.open("g.txt");
+  set_symmetric_difference(f.begin(), f.end(), g.begin(), g.end(), back_inserter(res));
 
-    if (!f.is_open() || !g.is_open()) {
-        cerr << "Error opening files!\n";
-        return 1;
-    }
-    vector <int> res;
-    while (getline(f, bufferOne) && getline(g, bufferTwo)) {
-        sort(bufferOne.begin(), bufferOne.end());
-        sort(bufferTwo.begin(), bufferTwo.end());
+  for (auto v : res)
+    cout << (char)v << " | ";
 
-        char buffer = bufferTwo[0];
-        char oldBuffer;
-        int pos;
-        int i = 0;
-        while (i < bufferTwo.length()) {
-            buffer = bufferTwo[i];
-            if (buffer == oldBuffer) {
-                i++;
-                continue;
-            }
-            pos = binarySearch(bufferOne, buffer);
-            if (pos != -1) {
-                bufferOne.erase(pos, pos + 1);
-                pos = binarySearch(bufferOne, buffer);
-                if (pos != -1) {
-                    cout << buffer << " | ";
-                }
-            }   else {
-                cout << buffer << " | ";
-            }
-            oldBuffer = bufferTwo[i];
-            i++;
-        }
-        
-    }
-
-    f.close();
-    g.close();
-
-    return 0;
+  return 0;
 }
 
-int binarySearch(string arr, char elem) {
-    int start = 0;
-    int end = arr.length();
-    bool find = false;
-    int pos = -1;
+void readFile(string filename, set <char> &kit) {
+  ifstream file(filename, ios::binary);
+  char buffer;
 
-    while (find == false && start <= end) {
-        int mid = (start + end) / 2;
-        if (arr[mid] == elem) {
-            find = true;
-            pos = mid;
-        }
+  int i = 1;
+  while (file.read((char*)&buffer, sizeof(char))) {
+    kit.insert(buffer);
 
-        if (elem < arr[mid]) {
-            end = mid - 1;
-        } else {
-            start = mid + 1;
-        }
-    }
-    
-    return pos;
+    file.seekg(i * sizeof(char));
+    i++;
+  }
+
+  file.close();
 }
