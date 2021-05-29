@@ -47,52 +47,10 @@ struct List {
     last = node;
   }
 
-  void sortBySum() {
-    Node* a = first;
-    Node* b = first->next;
- 
-    while (a->next) {
-      while (b) {
-        if (a->product.sum < b->product.sum) {
-          swap(a, b);
-          // temp->product = left->product;
-          // left->product = right->product;
-          // right->product = temp->product;
-          
-          if(a->prev == NULL){   //если "взятая" структура первая в списке
-            *first = a->next;                                    
-          }
-          else a->pred->next = a->next;
-
-          if(b->next == 0){   //если структура, после которой вставляется "взятая" структура, последняя в списке 
-            *close = b;
-          }
-          else b->next->pred = a;           
-            a->next->pred = b->pred;     
-            a->next = b->next;     
-            b->next = a;                          
-            a->pred = b;
-            b = a->next;
-
-        }
-
-        if (a->product.sum == b->product.sum) {
-          if(a->product.name > b->product.name) {
-            // temp->product = left->product;
-            // left->product = right->product;
-            // right->product = temp->product;
-          }
-        }
-
-        b = b->next;
-      }
-      a = a->next;
-      b = a->next;
-    }
+  void sort() {
+    
   }
-
   
-
   void print() {
     if (isEmpty()) return;
 
@@ -115,13 +73,13 @@ struct List {
 };
 
 void parseFile(string fileName, List &list);
-Product parseString(string buffer);
+
 int main() {
   List list;
 
   parseFile("products.txt", list);
 
-  list.sortBySum();
+  list.sort();
 
   list.print();
 
@@ -131,29 +89,15 @@ int main() {
 void parseFile(string fileName, List &list) {
   Product tmp("", 0);
   ifstream file;
-  string buffer = "";
 
   file.open(fileName);
 
-  while (getline(file, buffer)) {
-    tmp = parseString(buffer);
+  while (!file.eof()) {
+    file >> tmp.name;
+    file >> tmp.sum;
 
     list.push(tmp.name, tmp.sum);
   }
 
   file.close();
-}
-
-Product parseString(string buffer) {
-  string name = "#";
-  int sum = 0;
-
-  int separator = buffer.find_first_of(' ');
-
-  if (separator != -1) {
-    name = buffer.substr(0, separator);
-    sum = stoi(buffer.substr(separator + 1));
-  }
-
-  return (Product) { name, sum };
 }

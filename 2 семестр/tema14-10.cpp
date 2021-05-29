@@ -45,13 +45,11 @@ int main() {
     cin >> m;
 
     countAndRender(arr, n, m);
-
-    return 0;
   } catch(const char* error) {
     cerr << error << endl;
-
-    return 1;
   }
+
+  return 0;
 }
 
 void read(vector <Street> &arr, string fileName) {

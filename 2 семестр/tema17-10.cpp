@@ -59,6 +59,34 @@ struct Queue {
     return res;
   }
 
+  void clear() {
+    if (first == NULL && last == NULL) return;
+
+    Node* node;
+
+    while (first != last) {
+      node = first->next;
+      first = node;
+    }
+
+    first = NULL;
+    last = NULL;
+  }
+
+  string getLast() {
+    if (first == NULL && last == NULL)
+      return "";
+
+    if (!first) {
+      first = NULL;
+      last = NULL;
+
+      return "";
+    }
+
+    return first->word;
+  }
+
   void print() {
     Node* node = first;
 
@@ -67,84 +95,71 @@ struct Queue {
       node = node->next;
     }
   }
-
-  int getAverageLength() {
-    vector <int> lengths;
-
-    Node* node = first;
-
-    while (node) {
-      lengths.push_back(node->word.length());
-      node = node->next;
-    }
-
-    int sum = 0;
-
-    sum = accumulate(lengths.begin(), lengths.end(), sum);
-
-    return sum / lengths.size();
-  }
-
 };
 
-void parseFile(string fileName, Queue &queue);
-void parseString(string text, Queue &queue);
-void sortWords(Queue &queue);
+void parseFile(string fileName, Queue &big, Queue &little);
+void writeFile(string fileName, Queue queue);
 
 int main() {
-  Queue queue;
+  try {
+    Queue big, little;
 
-  parseFile("text.txt", queue);
+    parseFile("text.txt", big, little);
 
-  sortWords(queue);
+    writeFile("short.txt", little);
+    writeFile("big.txt", big);
+
+  } catch(const char* error) {
+    cerr << error << endl;
+  }
 
   return 0;
 }
 
-void parseFile(string fileName, Queue &queue) {
+void parseFile(string fileName, Queue &big, Queue &little) {
   ifstream file;
-  string buffer;
+  string buffer, word;
 
   file.open(fileName);
 
-  while(getline(file, buffer)) {
-    parseString(buffer, queue);
+  if (!file.is_open()) throw "Error opening file";
+
+  string inside;
+  while (!file.eof()) {
+    file >> buffer;
+
+    if (big.isEmpty() && little.isEmpty()) {
+      big.push(buffer);
+      little.push(buffer);
+    }
+
+    if (buffer.length() == little.getLast().length()) {
+      little.push(buffer);
+    } else if (buffer.length() < little.getLast().length()) {
+      little.clear();
+      little.push(buffer);
+    }
+
+    if (buffer.length() == big.getLast().length()) {
+      big.push(buffer);
+    } else if (buffer.length() > big.getLast().length()) {
+      big.clear();
+      big.push(buffer);
+    }
+
   }
 
   file.close();
 }
 
-void parseString(string text, Queue &queue) {
-  int start = 0;
-  int stop = 0;
-
-  while (text.find_first_of(' ') != -1) {
-    stop = text.find_first_of(' ');
-
-    queue.push(text.substr(0, stop));
-
-    text = text.substr(stop + 1);
-  }
-
-  queue.push(text);
-}
-
-void sortWords(Queue &queue) {
-  ofstream big, small;
-  int averageLength = queue.getAverageLength();
-
-  big.open("big.txt", ios::trunc);
-  small.open("small.txt", ios::trunc);
+void writeFile(string fileName, Queue queue) {
+  ofstream file(fileName);
+  string buffer;
 
   while (!queue.isEmpty()) {
-    string word = queue.pop();
-
-    if (word.length() >= averageLength)
-      big << word << " ";
-    else
-      small << word << " ";
+    buffer = queue.pop();
+    file << buffer << " ";
   }
 
-  big.close();
-  small.close();
+  file.close();
 }
