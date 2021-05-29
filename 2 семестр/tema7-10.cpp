@@ -1,73 +1,85 @@
 #include <iostream>
 #include <time.h>
+#define RANGE 100
 
+using namespace std;
+
+void generateMatrix(int** &matrix, int &x, int &y);
+void fillRandom(int** &matrix, int &x, int &y);
+void deleteMatrix(int** &matrix, int x, int y);
+void orderMatrix(int** &matrix, int x, int y);
 void renderMatrix(int** matrix, int col, int row);
-int** sortMatrixByBiggerNumber(int** matrix, int col, int row);
+int getMaxNumber(int* arr, int length);
 
 int main()
 {
     srand(time(NULL));
 
-    int columns = 0, rows = 0;
+    int x, y;
+    int** matrix;
+    
+    generateMatrix(matrix, x, y);
 
-    std::cout << "Columns: ";
-    std::cin >> columns;
-    std::cout << "Rows: ";
-    std::cin >> rows;
+    fillRandom(matrix, x, y);
 
-    int** numbers = new int*[rows];
-    for (int i = 0; i < rows; i++)
-    {
-        numbers[i] = new int[columns];
-    }
+    cout << "Your matrix:" << endl;
+    renderMatrix(matrix, x, y);
 
-    for (int i = 0; i < rows; i++)
-    {
-        for (int j = 0; j < columns; j++)
-        {
-            numbers[i][j] = rand() % 10;
-        }
-    }
+    orderMatrix(matrix, x, y);
 
-    renderMatrix(numbers, columns, rows);
+    cout << endl << "Ordered matrix:" << endl;
+    renderMatrix(matrix, x, y);
 
-    numbers = sortMatrixByBiggerNumber(numbers, columns, rows);
-
-    std::cout << "\nSorted:\n";
-    renderMatrix(numbers, columns, rows);
-
-    for (int i = 0; i < rows; i++)
-    {
-        delete numbers[i];
-    }
-
-    delete[] numbers;
+    deleteMatrix(matrix, x, y);
 
     return 1;
 }
 
-int** sortMatrixByBiggerNumber(int** matrix, int col, int row)
-{
-    int temporaryNumber = 0;
-    int** sortMatrix = matrix;
+void generateMatrix(int** &matrix, int &x, int &y) {
+    cout << "X: ";
+    cin >> x;
+    cout << "Y: ";
+    cin >> y;
 
-    for (int a = 0; a < row; a++)
-    {
-        for (int i = 0; i < col; i++)
-        {
-            for (int j = 0; j < col; j++)
-            {
-                if (sortMatrix[a][i] > sortMatrix[a][j])
-                {
-                    temporaryNumber = sortMatrix[a][i];
-                    sortMatrix[a][i] = sortMatrix[a][j];
-                    sortMatrix[a][j] = temporaryNumber;
-                }
+    matrix = new int*[y];
+
+    for (int i = 0; i < y; i++)
+        matrix[i] = new int[x];
+}
+
+void fillRandom(int** &matrix, int &x, int &y) {
+    for (int i = 0; i < y; i++) {
+        for (int j = 0; j < x; j++) {
+            matrix[i][j] = rand() % RANGE;
+        }
+    }
+}
+
+void orderMatrix(int** &matrix, int x, int y) {
+    int buffer = getMaxNumber(matrix[0], x);
+    int current;
+    int* tmp;
+
+    for (int i = 0; i < y; i++) {
+        buffer = getMaxNumber(matrix[i], x);
+
+        for (int j = 0; j < y; j++) {
+            current = getMaxNumber(matrix[j], x);
+
+            if (current > buffer) {
+                tmp = matrix[i];
+                matrix[i] = matrix[j];
+                matrix[j] = tmp;
             }
         }
     }
+}
 
-    return sortMatrix;
+void deleteMatrix(int** &matrix, int x, int y) {
+    for (int i = 0; i < y; i++)
+        delete matrix[i];
+
+    delete matrix;
 }
 
 void renderMatrix(int** matrix, int col, int row)
@@ -78,6 +90,17 @@ void renderMatrix(int** matrix, int col, int row)
         {
             std::cout << matrix[i][j] << " ";
         }
+
         std::cout << std::endl;
     }
+}
+
+int getMaxNumber(int* arr, int length) {
+    int max = 0;
+
+    for (int i = 0; i < length; i++) {
+        if (arr[i] > max) max = arr[i];
+    }
+
+    return max;
 }
