@@ -11,18 +11,16 @@ double parallelogramArea(Vector a, Vector b);
 double angleBetweenTwoVectors(Vector a, Vector b);
 double vectorModule(Vector vector);
 double scalarProductOfTwoVectors(Vector a, Vector b);
+double matrixDeterminant(Vector a, Vector b, Vector c);
+double crossProduct(Vector a, Vector b);
+Vector crossProductCoordinates(Vector a, Vector b);
 
 double parallelepipedVolume(Vector a, Vector b, Vector c) {
-  return abs(a.x * b.y * c.z + a.y * b.z * c.x + a.z * b.x * c.y - a.z * b.y * c.x - a.x * b.z * c.y - a.y * b.x * c.z);
+  return abs(matrixDeterminant(a, b, c));
 }
 
 double parallelogramArea(Vector a, Vector b) {
-  Vector res(0, 0, 0);
-  res.x = a.y * b.z - a.z * b.y;
-  res.y = -1 * (a.x * b.z - a.z * b.x);
-  res.z = a.x * b.y - a.y * b.x;
-
-  return vectorModule(res);
+  return vectorModule(crossProductCoordinates(a, b));
 }
 
 double angleBetweenTwoVectors(Vector a, Vector b) {
@@ -35,4 +33,16 @@ double vectorModule(Vector vector) {
 
 double scalarProductOfTwoVectors(Vector a, Vector b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+double matrixDeterminant(Vector a, Vector b, Vector c) {
+  return a.x * b.y * c.z + a.y * b.z * c.x + a.z * b.x * c.y - a.z * b.y * c.x - a.x * b.z * c.y - a.y * b.x * c.z;
+}
+
+double crossProduct(Vector a, Vector b) {
+  return (a.y * b.z - a.z * b.y) + (-1) * (a.x * b.z - a.z * b.x) + (a.x * b.y - a.y * b.x);
+}
+
+Vector crossProductCoordinates(Vector a, Vector b) {
+  return {a.y * b.z - a.z * b.y, -1 * (a.x * b.z - a.z * b.x), a.x * b.y - a.y * b.x};
 }
