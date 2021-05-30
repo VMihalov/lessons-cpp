@@ -29,14 +29,14 @@ void preOrder(Node* tree, int t = 1, int max = 0);
 int height(Node* tree);
 
 int main() {
-    std::string text = "beep boop beer";
+    std::string text = "lorem ipsum dolor sit amet";
     std::map <char, std::string> keys;
     std::map <char, int> frequency = countOrder(text);
     std::vector <Node*> tree = changeToTree(frequency);
 
     Node* forest = buildNode(tree);
     
-    std::cout << height(forest);
+    std::cout << "Height: " << height(forest) << std::endl;
 
     return 0;
 }
